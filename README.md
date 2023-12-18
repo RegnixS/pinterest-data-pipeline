@@ -3,6 +3,11 @@
 ## Table of Contents
  - [Description](#Description)
  - [Install Instructions](#Install-Instructions)
+ - [Creating the Pipelines](#creating-the-pipelines)
+   * [Kafka Client running on EC2](#kafka-client-running-on-ec2)
+   * [MSK Connect](#msk-connect)
+   * [Kafka REST Proxy](#kafka-rest-proxy)
+
  - [Usage Instructions](#Usage-Instructions)
  - [File Structure](#File-Structure)
  - [License](#License)
@@ -11,13 +16,13 @@
 This project aims to create a similar system processing billions of records similar to Pinterest using AWS Cloud. \
 The project involves creating data pipelines for both batch and real-time streaming.
 
-### Skills used:
-- AWS (EC2, IAM, S3, MSK, API Gateway, Kinesis, MWAA)
+### Technologies Used:
+- AWS (API Gateway, EC2, IAM, Kinesis, MSK, MWAA, RDS and S3)
+- Apache (Kafka, Spark and Airflow)
 - Databricks
-- Apache Kafka, Spark and Airflow
 
 An AWS account is provided with the following:
-- An empty EC2 instance
+- An empty EC2 instance running Linux
 - An MSK cluster
 - An empty S3 bucket
 
@@ -115,8 +120,58 @@ storage.class=io.confluent.connect.s3.storage.S3Storage
 key.converter=org.apache.kafka.connect.storage.StringConverter
 s3.bucket.name=<BUCKET_NAME>
 ```
-- **Worker Configuration** Select **Use a custom configuration**, then pick **confluent-worker**.
+- **Worker Configuration** Select **Use a custom configuration**, then pick **confluent-worker**. (This is a custom worker configuration that was created to manage storage partition sizes.)
 - **Access permissions** Select the IAM role previously used for the EC2 instance.
+
+## Kafka REST Proxy
+Be installing a Confluent REST Proxy for Kafka on the EC2 instance, we can post data from the Pinterest emulator to a REST API on the Amazon API Gateway which in turn sends it via the proxy to update the Kafka topics on the MSK cluster without having to create and maintain producer programs locally on the EC2 instance. 
+
+In the API Gateway console, create a REST type API with regional endpoint.
+
+Create a proxy resource with an ```ANY``` method like so:
+![Alt text](image.png)
+
+![Alt text](image-1.png)
+![Alt text](image-2.png)
+
+The **Endpoint URL** is the **Public IPv4 DNS** of the EC2 instance with the Kafka client. \
+**8082** is the default port the Confluent REST Proxy listens to.
+
+Creating a {proxy+} resource with HTTP proxy integration allows a streamlined setup where the API Gateway submits all request data directly to the backend with no intervention from API Gateway. \
+All requests and responses are handled by the backend - in this case the Confluent REST Proxy on the EC2 instance.
+
+Deploy the API:
+![Alt text](image-3.png)
+Once deployed, the API is now accessible from the web.
+
+Install the Confluent Kafka REST Proxy on the EC2 instance: \
+```sudo wget https://packages.confluent.io/archive/7.2/confluent-7.2.0.tar.gz```
+```tar -xvzf confluent-7.2.0.tar.gz```
+
+Configure the Kafka REST Proxy properties so it can comminucate with the MSK cluster, but updating the following file:
+```<CONFLUENT_FOLDER>/etc/kafka-rest/kafka-rest.properties``` \
+Update he ```bootstrap.servers``` and ```zookeeper.connect``` properties and also add the following to allow IAM authentication:
+```
+# Sets up TLS for encryption and SASL for authN.
+client.security.protocol = SASL_SSL
+
+# Identifies the SASL mechanism to use.
+client.sasl.mechanism = AWS_MSK_IAM
+
+# Binds SASL client implementation.
+client.sasl.jaas.config = software.amazon.msk.auth.iam.IAMLoginModule required awsRoleArn="Your Access Role";
+
+# Encapsulates constructing a SigV4 signature based on extracted credentials.
+# The SASL client bound by "sasl.jaas.config" invokes this class.
+client.sasl.client.callback.handler.class = software.amazon.msk.auth.iam.IAMClientCallbackHandler
+```
+
+Start the proxy server from the ```confluent-7.2.0/bin``` folder: \
+```./kafka-rest-start /home/ec2-user/confluent-7.2.0/etc/kafka-rest/kafka-rest.properties```
+
+## Pinterest User Posting Emulator
+The python program user_posting_emulation.py 
+
 
 ## Usage instructions
 ### Python files
