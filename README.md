@@ -13,8 +13,8 @@
  - [License](#License)
 
 ## Description
-This project aims to create a similar system processing billions of records similar to Pinterest using AWS Cloud. \
-The project involves creating data pipelines for both batch and real-time streaming.
+This project aims to create a system for processing billions of records similar to Pinterest using AWS Cloud. \
+Both batch and real-time streaming pipelines are implemented.
 
 ### Technologies Used:
 - AWS (API Gateway, EC2, IAM, Kinesis, MSK, MWAA, RDS and S3)
@@ -124,7 +124,7 @@ s3.bucket.name=<BUCKET_NAME>
 - **Access permissions** Select the IAM role previously used for the EC2 instance.
 
 ## Kafka REST Proxy
-Be installing a Confluent REST Proxy for Kafka on the EC2 instance, we can post data from the Pinterest emulator to a REST API on the Amazon API Gateway which in turn sends it via the proxy to update the Kafka topics on the MSK cluster without having to create and maintain producer programs locally on the EC2 instance. 
+By installing a Confluent REST Proxy for Kafka on the EC2 instance, we can post data from the Pinterest emulator to a REST API on the Amazon API Gateway which in turn sends it via the proxy to update the Kafka topics on the MSK cluster without having to create and maintain producer programs locally on the EC2 instance. 
 
 In the API Gateway console, create a REST type API with regional endpoint.
 
@@ -169,8 +169,33 @@ client.sasl.client.callback.handler.class = software.amazon.msk.auth.iam.IAMClie
 Start the proxy server from the ```confluent-7.2.0/bin``` folder: \
 ```./kafka-rest-start /home/ec2-user/confluent-7.2.0/etc/kafka-rest/kafka-rest.properties```
 
+The Kafka related modules are now ready to accept data from our Pinterest users.
+
 ## Pinterest User Posting Emulator
-The python program user_posting_emulation.py 
+In a MySQL database hosted on Amazon RDS in the cloud there resides 1000s of sample datasets that represent the information a Pinterest user may generate as they interact with their app. 
+There are 3 records per interaction representing 'pin' data, 'geo' or location data and 'user' data. \
+The JSON formats of examples of each dataset are as follows:
+- {'index': 7528, 'unique_id': 'fbe53c66-3442-4773-b19e-d3ec6f54dddf', 'title': 'No Title Data Available', 'description': 'No description available Story format', 'poster_name': 'User Info Error', 'follower_count': 'User Info Error', 'tag_list': 'N,o, ,T,a,g,s, ,A,v,a,i,l,a,b,l,e', 'is_image_or_video': 'multi-video(story page format)', 'image_src': 'Image src error.', 'downloaded': 0, 'save_location': 'Local save in /data/mens-fashion', 'category': 'mens-fashion'}
+- {'ind': 7528, 'timestamp': datetime.datetime(2020, 8, 28, 3, 52, 47), 'latitude': -89.9787, 'longitude': -173.293, 'country': 'Albania'}
+- {'ind': 7528, 'first_name': 'Abigail', 'last_name': 'Ali', 'age': 20, 'date_joined': datetime.datetime(2015, 10, 24, 11, 23, 51)}
+
+The python program user_posting_emulation.py will randomly read datasets from this database at random intervals and then using the requests python library post them to the API we built earlier. \
+To run this program:
+```python user_posting_emulation.py```
+
+To test whether the emulation is working, the python program check_user_posting_emulation.py will create Kafka consumers using the API and then consume the messages and output them to the JSON files: 
+- pin_consumer.json
+- geo_consumer.json
+- user_consumer.json
+
+To run this program:
+```python check_user_posting_emulation.py```
+
+The emulation can also be tested by running a consumer from the command line like so: 
+```
+./kafka-console-consumer.sh --bootstrap-server BootstrapServerString --consumer.config client.properties --group <consumer_group> --topic <topic_name> --from-beginning
+```
+The CLI command must be run on the EC2 instance where Kafka is installed, but the python programs can be run from any python environment anywhere with an internet connection.
 
 
 ## Usage instructions

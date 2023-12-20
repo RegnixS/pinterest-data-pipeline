@@ -3,7 +3,6 @@
 
 This module implements an emulation of users randomly posting Pins to Pinterest at random intervals.
 """
-#import boto3
 from dotenv import load_dotenv
 import json
 import os
@@ -58,8 +57,8 @@ def run_infinite_post_data_loop():
     Infinitely loops and pulls a random set of records from the MYSQL database and sends them to the API Gateway. 
     """
     x = 0
-    #while True:
-    while x < 1:
+    while True:
+    #while x < 1:
         sleep(random.randrange(0, 2))
         random_row = random.randint(0, 11000)
         engine = new_connector.create_db_connector()
@@ -125,6 +124,9 @@ def post_data_to_API(dict_result, topic_suffix):
 
 
 if __name__ == "__main__":
+    """
+    Continuously run the emulation by downloading data from RDS and posting to the API.
+    """
     run_infinite_post_data_loop()
     print('Working')
 
