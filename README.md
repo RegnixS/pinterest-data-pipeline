@@ -1,4 +1,4 @@
-# pinterest-data-pipeline238
+# Pinterest Data Pipeline
 
 ## Table of Contents
  - [Description](#Description)
@@ -15,6 +15,11 @@
 ## Description
 This project aims to create a system for processing billions of records similar to Pinterest using AWS Cloud. \
 Both batch and real-time streaming pipelines are implemented.
+****lambda*****
+![Alt text](aws.png)
+
+
+
 
 ### Technologies Used:
 - AWS (API Gateway, EC2, IAM, Kinesis, MSK, MWAA, RDS and S3)
@@ -28,7 +33,16 @@ An AWS account is provided with the following:
 
 
 ## Install Instructions
-To clone this Github repository, run the following: ```https://github.com/RegnixS/pinterest-data-pipeline238.git```
+Although much of the work in this project is configuring the tech stack in the cloud, this repository does contain this documentation and some python code to be run locally.
+
+To clone this Github repository, run the following: ```clone https://github.com/RegnixS/pinterest-data-pipeline.git <your_repo>```
+
+The python code requires Python 3.11.5 and the following packages:
+- python-dotenv
+- requests
+- sqlalchemy
+
+A Conda environment can be created from the requirements.txt file in this repository by: ```conda create -n <your_env> --file requirements.txt```
 
 ## Creating the pipelines
 
@@ -172,23 +186,31 @@ Start the proxy server from the ```confluent-7.2.0/bin``` folder: \
 The Kafka related modules are now ready to accept data from our Pinterest users.
 
 ## Pinterest User Posting Emulator
+### Data Source
 In a MySQL database hosted on Amazon RDS in the cloud there resides 1000s of sample datasets that represent the information a Pinterest user may generate as they interact with their app. 
-There are 3 records per interaction representing 'pin' data, 'geo' or location data and 'user' data. \
-The JSON formats of examples of each dataset are as follows:
-- {'index': 7528, 'unique_id': 'fbe53c66-3442-4773-b19e-d3ec6f54dddf', 'title': 'No Title Data Available', 'description': 'No description available Story format', 'poster_name': 'User Info Error', 'follower_count': 'User Info Error', 'tag_list': 'N,o, ,T,a,g,s, ,A,v,a,i,l,a,b,l,e', 'is_image_or_video': 'multi-video(story page format)', 'image_src': 'Image src error.', 'downloaded': 0, 'save_location': 'Local save in /data/mens-fashion', 'category': 'mens-fashion'}
-- {'ind': 7528, 'timestamp': datetime.datetime(2020, 8, 28, 3, 52, 47), 'latitude': -89.9787, 'longitude': -173.293, 'country': 'Albania'}
-- {'ind': 7528, 'first_name': 'Abigail', 'last_name': 'Ali', 'age': 20, 'date_joined': datetime.datetime(2015, 10, 24, 11, 23, 51)}
+There are 3 records per interaction representing 'pin' data, 'geo' or location data and 'user' data.
 
-The python program user_posting_emulation.py will randomly read datasets from this database at random intervals and then using the requests python library post them to the API we built earlier. \
-To run this program:
+The JSON formats of examples of each dataset are as follows:
+```json
+{'index': 7528, 'unique_id': 'fbe53c66-3442-4773-b19e-d3ec6f54dddf', 'title': 'No Title Data Available', 'description': 'No description available Story format', 'poster_name': 'User Info Error', 'follower_count': 'User Info Error', 'tag_list': 'N,o, ,T,a,g,s, ,A,v,a,i,l,a,b,l,e', 'is_image_or_video': 'multi-video(story page format)', 'image_src': 'Image src error.', 'downloaded': 0, 'save_location': 'Local save in /data/mens-fashion', 'category': 'mens-fashion'}
+
+{'ind': 7528, 'timestamp': datetime.datetime(2020, 8, 28, 3, 52, 47), 'latitude': -89.9787, 'longitude': -173.293, 'country': 'Albania'}
+
+{'ind': 7528, 'first_name': 'Abigail', 'last_name': 'Ali', 'age': 20, 'date_joined': datetime.datetime(2015, 10, 24, 11, 23, 51)}
+```
+
+The python program user_posting_emulation.py will randomly read datasets from this database at random intervals and then using the requests python library post them to the API we built earlier.
+
+To run this program: \
 ```python user_posting_emulation.py```
 
+### Testing Data is ingested by Kafka
 To test whether the emulation is working, the python program check_user_posting_emulation.py will create Kafka consumers using the API and then consume the messages and output them to the JSON files: 
 - pin_consumer.json
 - geo_consumer.json
 - user_consumer.json
 
-To run this program:
+To run this program: \
 ```python check_user_posting_emulation.py```
 
 The emulation can also be tested by running a consumer from the command line like so: 
@@ -196,6 +218,13 @@ The emulation can also be tested by running a consumer from the command line lik
 ./kafka-console-consumer.sh --bootstrap-server BootstrapServerString --consumer.config client.properties --group <consumer_group> --topic <topic_name> --from-beginning
 ```
 The CLI command must be run on the EC2 instance where Kafka is installed, but the python programs can be run from any python environment anywhere with an internet connection.
+
+### Testing Data has been ingested and stored in S3
+To see if the data has gone through the Kafka via MSK and MSK Connect, we can look in the S3 data lake.
+![Alt text](image-4.png)
+![Alt text](image-5.png)
+![Alt text](image-6.png)
+
 
 
 ## Usage instructions
@@ -210,6 +239,37 @@ This consists of a set of three datasets which are:
 
 ## File structure of the project:
 user_posting_emulation.py 
+
+Local Machine
+|-- dags/
+    |-- 0a3db223d459_dag.py
+|-- databricks_notebooks/
+    |-- access_keys.ipynb
+    |-- data_cleaning_tools.ipynb
+    |-- data_cleaning.ipynb
+    |-- data_sql_query.ipynb
+    |-- mount_s3_to_databricks.ipynb
+    |-- stream_and_clean_kinesis_data.ipynb
+|-- db/
+    |-- aws_db_connector.py
+|-- utils/
+    |-- data_transformations.py
+|-- batch_streaming.py
+|-- kinesis_streaming.py
+|-- README.md
+
+EC2 Instance
+|-- kafka_2.12-2.8.1/
+    |-- bin/
+        |-- client.properties
+    |-- libs/
+        |-- aws-msk-iam-auth-1.1.5-all.jar
+|-- kafka-connect-s3/
+    |-- confluentinc-kafka-connect-s3-10.0.3.zip
+|-- confluent-7.2.0/
+    |-- etc/
+        |-- kafka-rest/
+            |-- kafka-rest.properties
 
 ## License information:
 MIT License
