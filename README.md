@@ -3,7 +3,7 @@
 ## Table of Contents
  - [Description](#description)
    * [Pipeline Architecture](#pipeline-architecture)
-   * [Technoligies Used](#technologies-used)
+   * [Technologies Used](#technologies-used)
    * [Project Highlights](#project-highlights)
  - [Install Instructions](#install-instructions)
  - [Creating the Pipelines](#creating-the-pipelines)
@@ -24,14 +24,14 @@ The pipeline implemented is a Lambda architecture where you have both a batch pr
 
 ![Alt text](aws.png)
 #### Data Ingestion
-Data is sent to the API from the user_posting_emulation.py script, which provides a real-time stream of data, ready to be ingested and processed. user_posting_emulation.py works by generating an infinite loop of Pinterest posts extracted from a database. In the batch pipeline, the API forwards the data to the Kafka Client machine where acting as a producer, it publishes (writes) events to Kafka topics and MSK drops it in the S3 data lake sink.
+Data is sent to the API from the user_posting_emulation.py script, which provides a real-time stream of data, ready to be ingested and processed. The script infinitely generataes random Pinterest posts extracted from a database. In the batch pipeline, the API forwards the data to the Kafka Client machine where acting as a producer, it publishes (writes) events to Kafka topics and MSK drops it in the S3 data lake sink.
 In the streaming pipeline, the API forwards the data to AWS Kinesis.
 
 #### Data Processing
-Apache Spark handles the data cleaning and normalisation using PySpark running on Databricks. In the batch processing pipeline, the data is extracted from the S3 data lake and processed with Spark. In the streaming pipeline, data is read into a Spark Streaming data frame from Kinesis, allowing for transformations to be applied in real-time.
+Apache Spark handles the data cleaning using PySpark running on Databricks. In the batch processing pipeline, the data is extracted from the S3 data lake and transformed with Spark. In the streaming pipeline, data is read into a Spark Streaming data frame from Kinesis, allowing for transformations to be applied in real-time.
 
 #### Data Orchestration
-Apache Airflow is a task scheduling platform which allows tasks to be created and managed. In this project, the Spark cleaning and normalisation tasks for the batch processing job have been automated to run once a day.
+Apache Airflow is a task scheduling system which allows tasks to be created and managed. In this project, the Spark cleaning tasks for the batch processing pipeline have been automated to run once a day.
 
 #### Data Storage
 For the batch processing pipeline, data is stored in the S3 data lake before being subsequently processed. For the streaming pipeline, the transformations are applied to incoming data stream. In both cases the cleaned data is output to Delta tables in the Databricks Delta Lakehouse. 
@@ -241,7 +241,7 @@ In a MySQL database hosted on Amazon RDS in the cloud there resides 1000s of sam
 There are 3 records per interaction representing 'pin' data, 'geo' or location data and 'user' data.
 
 The JSON formats of examples of each dataset are as follows:
-```json
+```
 {'index': 7528, 'unique_id': 'fbe53c66-3442-4773-b19e-d3ec6f54dddf', 'title': 'No Title Data Available', 'description': 'No description available Story format', 'poster_name': 'User Info Error', 'follower_count': 'User Info Error', 'tag_list': 'N,o, ,T,a,g,s, ,A,v,a,i,l,a,b,l,e', 'is_image_or_video': 'multi-video(story page format)', 'image_src': 'Image src error.', 'downloaded': 0, 'save_location': 'Local save in /data/mens-fashion', 'category': 'mens-fashion'}
 
 {'ind': 7528, 'timestamp': datetime.datetime(2020, 8, 28, 3, 52, 47), 'latitude': -89.9787, 'longitude': -173.293, 'country': 'Albania'}
@@ -329,36 +329,35 @@ python check_user_posting_emulation.py
 ## File structure of the project:
 user_posting_emulation.py 
 
-Local Machine
-|-- dags/
-    |-- 0a3db223d459_dag.py
-|-- databricks_notebooks/
-    |-- access_keys.ipynb
-    |-- data_cleaning_tools.ipynb
-    |-- data_cleaning.ipynb
-    |-- data_sql_query.ipynb
-    |-- mount_s3_to_databricks.ipynb
-    |-- stream_and_clean_kinesis_data.ipynb
-|-- db/
-    |-- aws_db_connector.py
-|-- utils/
-    |-- data_transformations.py
-|-- batch_streaming.py
-|-- kinesis_streaming.py
-|-- README.md
+Local Machine \
+|-- dags/ \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- 0a3db223d459_dag.py \
+|-- databricks_notebooks/ \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- access_keys.ipynb \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- data_cleaning_tools.ipynb \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- data_cleaning.ipynb \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- data_sql_query.ipynb \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- Mount S3 Bucket and Create Dataframes.ipynb \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- stream_and_clean_kinesis_data.ipynb \
+|-- .env.example \
+|-- user_posting_emulation.py \
+|-- check_user_posting_emulation.py \
+|-- kinesis_streaming.py \
+|-- README.md \
+|-- requirements.txt
 
 EC2 Instance
-|-- kafka_2.12-2.8.1/
-    |-- bin/
-        |-- client.properties
-    |-- libs/
-        |-- aws-msk-iam-auth-1.1.5-all.jar
-|-- kafka-connect-s3/
-    |-- confluentinc-kafka-connect-s3-10.0.3.zip
-|-- confluent-7.2.0/
-    |-- etc/
-        |-- kafka-rest/
-            |-- kafka-rest.properties
+|-- kafka_2.12-2.8.1/ \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- bin/ \
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|-- client.properties \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- libs/ \
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|-- aws-msk-iam-auth-1.1.5-all.jar \
+|-- kafka-connect-s3/ \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- confluentinc-kafka-connect-s3-10.0.3.zip \
+|-- confluent-7.2.0/ \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- etc/ \
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|-- kafka-rest/ \
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|-- kafka-rest.properties 
 
 ## License information:
 MIT License
