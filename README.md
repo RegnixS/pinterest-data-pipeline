@@ -16,28 +16,29 @@
  - [File Structure](#File-Structure)
  - [License](#License)
 
+
 ## Description
-This project aims to create use AWS Cloud to create a system similar to Pinterest that is capable of crunching billions of data points a data to help decide how to provide more value to the users. \
+This project aims to use AWS Cloud to create a data pipeline similar to the one belonging to Pinterest that is capable of crunching billions of data points to help decide how to provide more value to their users.
 
 ### Pipeline Architecture
 The pipeline implemented is a Lambda architecture where you have both a batch processing pipeline and a streaming pipeline in parallel.
 
 ![Alt text](aws.png)
 #### Data Ingestion
-Data is sent to the API from the user_posting_emulation.py script, which provides a real-time stream of data, ready to be ingested and processed. The script infinitely generataes random Pinterest posts extracted from a database. In the batch pipeline, the API forwards the data to the Kafka Client machine where acting as a producer, it publishes (writes) events to Kafka topics and MSK drops it in the S3 data lake sink.
+Data is sent to the API from the user_posting_emulation.py script, which provides a real-time stream of data, ready to be ingested and processed. The script infinitely generates random Pinterest posts extracted from a database. In the batch pipeline, the API forwards the data to the Kafka Client machine where acting as a producer, it writes events to Kafka topics and MSK drops it in the S3 data lake sink.
 In the streaming pipeline, the API forwards the data to AWS Kinesis.
 
 #### Data Processing
 Apache Spark handles the data cleaning using PySpark running on Databricks. In the batch processing pipeline, the data is extracted from the S3 data lake and transformed with Spark. In the streaming pipeline, data is read into a Spark Streaming data frame from Kinesis, allowing for transformations to be applied in real-time.
 
 #### Data Orchestration
-Apache Airflow is a task scheduling system which allows tasks to be created and managed. In this project, the Spark cleaning tasks for the batch processing pipeline have been automated to run once a day.
+Apache Airflow is a task scheduling system which allows tasks to be created and managed. The Spark cleaning tasks for the batch processing pipeline have been automated to run daily.
 
 #### Data Storage
-For the batch processing pipeline, data is stored in the S3 data lake before being subsequently processed. For the streaming pipeline, the transformations are applied to incoming data stream. In both cases the cleaned data is output to Delta tables in the Databricks Delta Lakehouse. 
+For the batch processing pipeline, data is stored in the S3 data lake before being subsequently processed. For the streaming pipeline, the transformations are applied to incoming data stream. In both cases the cleaned data can be output to Delta tables in the Databricks Delta Lakehouse, back to S3 or anywhere else.
 
 #### Data Analysis
-Further computations were done on the data, including a count of the total number of posts per category and category popularity (mean follower count per category). The results of these were also sent to the Lakehouse for permanent storage.
+Further computations were done on the data using Apache Spark on Databricks, including such metrics as most popular categories by country, year or age group and users with the most followers based on country, joining year and age group.
 
 ### Technologies Used:
 - AWS Elastic Cloud Compute (EC2): Scalable on-demand computing capacity in the cloud.
@@ -57,9 +58,9 @@ Further computations were done on the data, including a count of the total numbe
 - Developed a robust data processing pipeline capable of handling large scale experimental data requirements. 
 - Implemented a Lambda architecture, combining batch processing and stream processing methods. 
 - Leveraged Kafka, MSK and Kinesis to handle scalable and fault-tolerant data streaming. 
-- Utilized Spark and Spark Structured Streaming for real-time data processing and analytics.
-- Integrated various data sources and sinks using APIs and MSK Connect for seamless data integration.
-- Ensured data storage and retrieval using AWS S3 and Databricks Delta Tables.
+- Utilized Spark and Spark Structured Streaming for batch and real-time data processing and analytics.
+- Integrated various data sources and sinks using Python libraries, APIs and MSK Connect for seamless data integration.
+- Enabled data storage and retrieval using AWS S3 and Databricks Delta Tables.
 - Orchestrated and scheduled workflows using Airflow and MWAA for efficient pipeline management.
 
 ## Install Instructions
@@ -74,6 +75,7 @@ The python code requires Python 3.11.5 and the following packages:
 - python-dotenv
 - requests
 - sqlalchemy
+- pymysql
 
 A Conda environment can be created from the requirements.txt file in this repository by: 
 ```bash
@@ -249,9 +251,9 @@ The JSON formats of examples of each dataset are as follows:
 {'ind': 7528, 'first_name': 'Abigail', 'last_name': 'Ali', 'age': 20, 'date_joined': datetime.datetime(2015, 10, 24, 11, 23, 51)}
 ```
 
-The python program user_posting_emulation.py will randomly read datasets from this database at random intervals and then using the ```requests``` python library post them to the API we built earlier.
+The python program user_posting_emulation.py will infinitely read random datasets from the remote database at random intervals and then, using the ```requests``` python library, post them to the API we built earlier.
 
-To run this program: \
+To run this program: 
 ```bash
 python user_posting_emulation.py
 ```
@@ -262,7 +264,7 @@ To test whether the emulation is working, the python program check_user_posting_
 - geo_consumer.json
 - user_consumer.json
 
-To run this program: \
+To run this program: 
 ```bash
 python check_user_posting_emulation.py
 ```
@@ -279,7 +281,7 @@ To see if the data has gone through the Kafka via MSK and MSK Connect, we can lo
 ![Alt text](image-5.png)
 ![Alt text](image-6.png)
 
-### Databricks and PySpark
+### Databricks and Spark
 #### Mount the S3 bucket to Databricks
 In order to access the S3 bucket containing the Kafka topics data, we first need to allow access to the bucket. 
 To do this we first need to create a user in IAM for the AWS account for Databricks to access. 
@@ -291,8 +293,7 @@ Drop the key CSV file in the space and click **Create Table with UI**.
 
 Now that the access keys are available from within the Databricks file store, we can use them in our notebooks.
 
-The first notebook **Mount S3 Bucket and Create Dataframes.ipynb** 
-will perform the following tasks:
+**Mount S3 Bucket and Create Dataframes.ipynb** performs the following tasks:
 - Access the authentication csv file in Databricks file store.
 - Read the access key information.
 - Mount the S3 bucket using the bucket URI and access key information. 
@@ -300,29 +301,72 @@ will perform the following tasks:
 - Read the geo data from: ```/mnt/<bucket_name>/topics/129a67850695.geo/partition=0/```
 - Read the user data from: ```/mnt/<bucket_name>/topics/129a67850695.user/partition=0/```
 - Copy the dataframes to Global Temporary Views so they can be used in other notebooks.
-- Unmount the S3 bucket. 
+
+**Unmount S3 Bucket.ipynb** will unmount the bucket after we are done with it. This would normally be after all the processing has been done using the data in the bucket.
+
+#### Access S3 Buckets Without Mounting
+While working on the project, there were security issues that affected the notebook: **Mount S3 Bucket and Create Dataframes.ipynb**.
+I discovered that Databricks no longer recommends mounting external data sources to the Databricks filesystem, so I made a new notebook. 
+
+**Access S3 Without Mounting.ipynb** performs the following tasks similar to the previous notebook, but reads directly from the S3 bucket using the access keys and S3 URI without needing a mount:
+- Access the authentication csv file in Databricks file store.
+- Read the access key information.
+- Read the pin data from: ```/mnt/<bucket_name>/topics/129a67850695.pin/partition=0/``` 
+- Read the geo data from: ```/mnt/<bucket_name>/topics/129a67850695.geo/partition=0/```
+- Read the user data from: ```/mnt/<bucket_name>/topics/129a67850695.user/partition=0/```
+- Copy the dataframes to Global Temporary Views so they can be used in other notebooks.
+
+### Cleaning and Transforming the Data
+The cleaning of the incoming data is done in three separate notebooks. One for Pin data, one for Geo (location) data and one for user data.
+
+**Clean Pin Data.ipynb** performs the following transformations:
+- Drop duplicates and empty rows
+- Replace entries with no relevant data in each column with Nulls
+- Perform the necessary transformations on the follower_count to ensure every entry is a number and the data type of this column is integer
+- Clean the data in the save_location column to include only the save location path
+- Rename the index column to ind
+- Reorder the dataframe
+
+**Clean Geo Data.ipynb** performs the following transformations:
+- Drop duplicates and empty rows
+- Create new coordinates column based on latitiude and longtitude
+- Drop latitude and longtitude
+- Convert timestamp to timestamp data type
+- Reorder the dataframe
+
+**Clean User Data.ipynb** performs the following transformations:
+- Drop duplicates and empty rows.
+- Combine first and last names.
+- Drop first_name and last_name.
+- Convert date_joined to timestamp data type.
+- Reorder the dataframe.
+
+### Data Analysis Using Spark
+Spark was used to analyse the cleaned and transformed data in order to help inform business users of examples of potentially valuable metrics that can be derived from such data.
+
+The following queries were made using pySpark functions:
+- Most popular category in each country
+- Most popular category each year
+- Most followers in each country
+- Most popular category for different age groups
+- Median follower count for different age groups
+- How many users have joined each year
+- Median follow count of users based on their joining year
+- Median follow count of users based on their joining year and age group
 
 
 
 ## Usage instructions
 ### Python files
-#### user_posting_emulation.py : 
-This program at random intervals, pulls random data from a mySQL database. \
-This consists of a set of three datasets which are:
-- details of the 'pin'
-- details of a location from where this 'pin' originated
-- details of a user who posted the 'pin' 
+**user_posting_emulation.py** :  This program will infinitely read random datasets from the remote database at random intervals and then post them to the API Gateway.
 
-To run this program: \
+To run this program: 
 ```bash
 python user_posting_emulation.py
 ```
-To test whether the emulation is working, the python program check_user_posting_emulation.py will create Kafka consumers using the API and then consume the messages and output them to the JSON files: 
-- pin_consumer.json
-- geo_consumer.json
-- user_consumer.json
+**check_user_posting_emulation.py** :  This program tests whether the emulation is working by creating Kafka consumers using the API and then consuming the messages and outputing them to JSON files.
 
-To run this program: \
+To run this program: 
 ```bash
 python check_user_posting_emulation.py
 ```
