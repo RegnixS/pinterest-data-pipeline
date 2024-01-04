@@ -1,22 +1,17 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC #Mount the S3 Bucket containing data from Kafka
-# MAGIC 1. Get the AWS authentication key file
-# MAGIC 2. Extract the key values
-# MAGIC 3. Mount the S3 bucket
-# MAGIC 4. Create 3 dataframes from the 3 locations in the mounted bucket
-# MAGIC 5. Unmount the S3 bucket
+# MAGIC 1. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/973155298461779/command/973155298461784">Get the AWS authentication key file</a> 
+# MAGIC 2. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/973155298461779/command/973155298462121">Extract the key values</a>
+# MAGIC 3. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/973155298461779/command/973155298461783">Mount the S3 bucket</a>
+# MAGIC 4. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/973155298461779/command/973155298462122">Create 3 dataframes from the 3 locations in the mounted bucket</a>
+# MAGIC 5. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/973155298461779/command/2562161702425375">Copy Dataframes to Global Temporary Views</a>
 # MAGIC
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Get Authentication File
-
-# COMMAND ----------
-
-dbutils.fs.ls("/FileStore/tables")
-#dbutils.fs.ls("/user/hive/warehouse")
+# MAGIC ## Get authentication File
 
 # COMMAND ----------
 
@@ -25,30 +20,16 @@ from pyspark.sql.functions import *
 # URL processing
 import urllib
 
-# Specify file type to be csv
-file_type = "csv"
-# Indicates file has first row as the header
-first_row_is_header = "true"
-# Indicates file has comma as the delimeter
-delimiter = ","
-# Read the CSV file to spark dataframe
-aws_keys_df = spark.read.format(file_type)\
-.option("header", first_row_is_header)\
-.option("sep", delimiter)\
-.load("/FileStore/tables/authentication_credentials.csv")
-#.load("/user/hive/warehouse/authentication_credentials_3_csv")#
+# Define the path to the Delta table
+delta_table_path = "dbfs:/user/hive/warehouse/authentication_credentials"
 
-# Get the AWS access key and secret key from the spark dataframe
-ACCESS_KEY = aws_keys_df.select('Access key ID').collect()[0]['Access key ID']
-SECRET_KEY = aws_keys_df.select('Secret access key').collect()[0]['Secret access key']
-# Encode the secrete key
-ENCODED_SECRET_KEY = urllib.parse.quote(string=SECRET_KEY, safe="")
-
+# Read the Delta table to a Spark DataFrame
+aws_keys_df = spark.read.format("delta").load(delta_table_path)
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ##Extract Access Keys
+# MAGIC ##Extract access keys
 
 # COMMAND ----------
 
@@ -61,7 +42,7 @@ ENCODED_SECRET_KEY = urllib.parse.quote(string=SECRET_KEY, safe="")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC #Mount the Bucket
+# MAGIC ##Mount the bucket
 
 # COMMAND ----------
 
@@ -77,14 +58,19 @@ display(dbutils.fs.ls("/mnt/user-129a67850695-bucket/"))
 
 # COMMAND ----------
 
+# We need to turn off delta format check before trying to read the json files because of a change to Databricks configuration
+spark.conf.set("spark.databricks.delta.formatCheck.enabled", False)
+
+# COMMAND ----------
+
 # MAGIC %md
-# MAGIC ##Read Pin data to a Dataframe
+# MAGIC ##Read pin data to a dataframe
 
 # COMMAND ----------
 
 # File location and type
 # Asterisk(*) indicates reading all the content of the specified file that have .json extension
-file_location = "/mnt/user-129a67850695-bucket/topics/129a67850695.pin/partition=0/*.json" 
+file_location = "/mnt/user-129a67850695-bucket/topics/129a67850695.pin/partition=0/*.json"
 file_type = "json"
 # Ask Spark to infer the schema
 infer_schema = "true"
@@ -98,7 +84,7 @@ display(df_pin)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ##Read Geo data to a Dataframe
+# MAGIC ##Read geo data to a dataframe
 
 # COMMAND ----------
 
@@ -118,13 +104,13 @@ display(df_geo)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ##Read User data to a Dataframe
+# MAGIC ##Read user data to a dataframe
 
 # COMMAND ----------
 
 # File location and type
 # Asterisk(*) indicates reading all the content of the specified file that have .json extension
-file_location = "/mnt/user-129a67850695-bucket/topics/129a67850695.pin/partition=0/*.json" 
+file_location = "/mnt/user-129a67850695-bucket/topics/129a67850695.user/partition=0/*.json" 
 file_type = "json"
 # Ask Spark to infer the schema
 infer_schema = "true"
@@ -138,22 +124,13 @@ display(df_user)
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Copy Dataframes to Global Temporary Views
+# MAGIC ## Copy dataframes to global temporary views
 
 # COMMAND ----------
 
 df_pin.createOrReplaceGlobalTempView("df_pin")
 df_geo.createOrReplaceGlobalTempView("df_geo")
 df_user.createOrReplaceGlobalTempView("df_user")
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ##Unmount the Bucket
-
-# COMMAND ----------
-
-dbutils.fs.unmount("/mnt/user-129a67850695-bucket")
 
 # COMMAND ----------
 
