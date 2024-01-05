@@ -66,7 +66,7 @@ df_pop_category_by_year = df_pin.join(df_geo, df_pin["ind"] == df_geo["ind"]) \
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC # Users with the most followers in each country
+# MAGIC ## Users with the most followers in each country
 
 # COMMAND ----------
 
@@ -208,7 +208,7 @@ df_median_follower_counts_by_joining_year = df_pin.join(df_user.dropDuplicates([
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC #Median follower count of users based on joining year and age group
+# MAGIC ##Median follower count of users based on joining year and age group
 
 # COMMAND ----------
 
