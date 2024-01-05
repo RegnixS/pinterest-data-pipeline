@@ -13,7 +13,7 @@
     * [Pinterest User Posting Emulator](#pinterest-user-posting-emulator)
     * [Databricks and Spark](#databricks-and-spark)
     * [Airflow using AWS MWAA](#airflow-using-aws-mwaa)
- - [Usage Instructions](#Usage-Instructions)
+ - [Usage Instructions][def]
  - [File Structure](#File-Structure)
  - [License](#License)
 
@@ -372,10 +372,10 @@ The DAG **129a67850695_dag.py** is in this repository in the folder **dags**.
 It will run the notebook: **Access S3 Without Mounting.py**, then the cleaning notebooks: **Clean Pin Data.py**, **Clean Geo Data.py**, and **Clean User Data.py**. After all these are finished, it will run notebook: **Data Analyisis.py**. 
 The DAG is set to run daily, but can be run on demand.
 
-The dependency graph is below:
+The dependency graph is below: \
 ![DAG](image-7.png)
 
-The DAG has been run successfully a few times as shown below:
+The DAG has been run successfully a few times as shown below: \
 ![Alt text](image-8.png)
 
 ## Streaming Pipeline
@@ -449,3 +449,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+
+[def]: #Usage-Instructions
