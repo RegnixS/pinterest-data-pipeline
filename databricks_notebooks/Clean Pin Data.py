@@ -16,7 +16,7 @@
 
 # COMMAND ----------
 
-df_pin = spark.table("global_temp.df_pin")
+df_pin = spark.table("global_temp.df_129a67850695_pin")
 df_pin_clean = df_pin.distinct()
 df_pin_clean = df_pin_clean.dropna()
 
@@ -81,4 +81,4 @@ df_pin_clean.display()
 
 # COMMAND ----------
 
-df_pin_clean.createOrReplaceGlobalTempView("df_pin_clean")
+df_pin_clean.createOrReplaceGlobalTempView("df_129a67850695_pin_clean")

@@ -18,9 +18,9 @@
 
 # COMMAND ----------
 
-df_pin = spark.table("global_temp.df_pin_clean")
-df_geo = spark.table("global_temp.df_geo_clean")
-df_user = spark.table("global_temp.df_user_clean")
+df_pin = spark.table("global_temp.df_129a67850695_pin_clean")
+df_geo = spark.table("global_temp.df_129a67850695_geo_clean")
+df_user = spark.table("global_temp.df_129a67850695_user_clean")
 
 # COMMAND ----------
 
@@ -67,22 +67,31 @@ df_pop_category_by_year = df_pin.join(df_geo, df_pin["ind"] == df_geo["ind"]) \
 
 # MAGIC %md
 # MAGIC ## Users with the most followers in each country
+# MAGIC Step 1: For each country find the user with the most followers
 
 # COMMAND ----------
 
+from pyspark.sql import Window
+from pyspark.sql.functions import desc, rank
+# Create a window that orders by descending "follower_count" for each "country"
+window_spec = Window.partitionBy("country").orderBy(desc("follower_count"))
 # Join df_pin and df_geo together using common column "ind"
+# Rank "follower_count" using the window
+# Only show the highest rank
 # Select the columns for the output
-# Order by "country", then descending "follower_count", then "poster_name"
+# Drop duplicates as there can be multiple pins by the same poster
 df_most_followers_by_country = df_pin.join(df_geo, df_pin["ind"] == df_geo["ind"]) \
+    .withColumn("rank", rank().over(window_spec)) \
+    .filter("rank = 1") \
     .select("country", "poster_name", "follower_count") \
-    .orderBy("country", "follower_count", "poster_name", ascending=[1,0,1])
+    .dropDuplicates(["poster_name", "country"])
 display(df_most_followers_by_country)
-# Note: This dataframe is based on pins with the highest follower counts, so will show duplicate users.
 
 # COMMAND ----------
 
 # MAGIC %md
 # MAGIC ### The user with the most followers in all countries
+# MAGIC Step 2: Based on the above query, find the country with the user with most followers.
 
 # COMMAND ----------
 
@@ -127,6 +136,7 @@ display(df_pop_category_by_age_groups)
 
 # MAGIC %md
 # MAGIC ### Only the top most popular category for each different age group (including ties)
+# MAGIC In case only the top most category is needed per age group
 
 # COMMAND ----------
 

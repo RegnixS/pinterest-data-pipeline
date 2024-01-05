@@ -15,7 +15,7 @@
 
 # COMMAND ----------
 
-df_user = spark.table("global_temp.df_user")
+df_user = spark.table("global_temp.df_129a67850695_user")
 df_user_clean = df_user.distinct()
 df_user_clean = df_user_clean.dropna()
 
@@ -66,4 +66,4 @@ df_user_clean.display()
 
 # COMMAND ----------
 
-df_user_clean.createOrReplaceGlobalTempView("df_user_clean")
+df_user_clean.createOrReplaceGlobalTempView("df_129a67850695_user_clean")

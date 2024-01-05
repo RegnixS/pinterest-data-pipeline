@@ -15,7 +15,7 @@
 
 # COMMAND ----------
 
-df_geo = spark.table("global_temp.df_geo")
+df_geo = spark.table("global_temp.df_129a67850695_geo")
 df_geo_clean = df_geo.distinct()
 df_geo_clean = df_geo_clean.dropna()
 
@@ -66,7 +66,7 @@ df_geo_clean.display()
 
 # COMMAND ----------
 
-df_geo_clean.createOrReplaceGlobalTempView("df_geo_clean")
+df_geo_clean.createOrReplaceGlobalTempView("df_129a67850695_geo_clean")
 
 # COMMAND ----------
 
