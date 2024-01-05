@@ -2,16 +2,17 @@
 
 ## Table of Contents
  - [Description](#description)
-   * [Pipeline Architecture](#pipeline-architecture)
-   * [Technologies Used](#technologies-used)
-   * [Project Highlights](#project-highlights)
+    * [Pipeline Architecture](#pipeline-architecture)
+    * [Technologies Used](#technologies-used)
+    * [Project Highlights](#project-highlights)
  - [Install Instructions](#install-instructions)
  - [Creating the Pipelines](#creating-the-pipelines)
-   * [Kafka Client running on EC2](#kafka-client-running-on-ec2)
-   * [MSK Connect](#msk-connect)
-   * [API Gateway and Kafka REST Proxy](#api-gateway-and-kafka-rest-proxy)
+    * [Kafka Client running on EC2](#kafka-client-running-on-ec2)
+    * [MSK Connect](#msk-connect)
+    * [API Gateway and Kafka REST Proxy](#api-gateway-and-kafka-rest-proxy)
     * [Pinterest User Posting Emulator](#pinterest-user-posting-emulator)
-    * [Databricks]
+    * [Databricks and Spark](#databricks-and-spark)
+    * [Airflow using AWS MWAA](#airflow-using-aws-mwaa)
  - [Usage Instructions](#Usage-Instructions)
  - [File Structure](#File-Structure)
  - [License](#License)
@@ -293,33 +294,35 @@ Drop the key CSV file in the space and click **Create Table with UI**.
 
 Now that the access keys are available from within the Databricks file store, we can use them in our notebooks.
 
-**Mount S3 Bucket and Create Dataframes.ipynb** performs the following tasks:
+In some notebooks, resultant dataframes have been copied to Global Temporary Views to make them available to other notebooks. In these cases, "129a67850695" has been added to the name so other users will not overwrite them by using similar names. 
+
+**Mount S3 Bucket and Create Dataframes.py** performs the following tasks:
 - Access the authentication csv file in Databricks file store.
 - Read the access key information.
 - Mount the S3 bucket using the bucket URI and access key information. 
 - Read the pin data from: ```/mnt/<bucket_name>/topics/129a67850695.pin/partition=0/```
 - Read the geo data from: ```/mnt/<bucket_name>/topics/129a67850695.geo/partition=0/```
 - Read the user data from: ```/mnt/<bucket_name>/topics/129a67850695.user/partition=0/```
-- Copy the dataframes to Global Temporary Views so they can be used in other notebooks.
+- Copy the dataframes to Global Temporary Views.
 
-**Unmount S3 Bucket.ipynb** will unmount the bucket after we are done with it. This would normally be after all the processing has been done using the data in the bucket.
+**Unmount S3 Bucket.py** will unmount the bucket after we are done with it. This would normally be after all the processing has been done using the data in the bucket.
 
 #### Access S3 Buckets Without Mounting
-While working on the project, there were security issues that affected the notebook: **Mount S3 Bucket and Create Dataframes.ipynb**.
+While working on the project, there were security issues that affected the notebook: **Mount S3 Bucket and Create Dataframes.py**.
 I discovered that Databricks no longer recommends mounting external data sources to the Databricks filesystem, so I made a new notebook. 
 
-**Access S3 Without Mounting.ipynb** performs the following tasks similar to the previous notebook, but reads directly from the S3 bucket using the access keys and S3 URI without needing a mount:
+**Access S3 Without Mounting.py** performs the following tasks similar to the previous notebook, but reads directly from the S3 bucket using the access keys and S3 URI without needing a mount:
 - Access the authentication csv file in Databricks file store.
 - Read the access key information.
 - Read the pin data from: ```/mnt/<bucket_name>/topics/129a67850695.pin/partition=0/``` 
 - Read the geo data from: ```/mnt/<bucket_name>/topics/129a67850695.geo/partition=0/```
 - Read the user data from: ```/mnt/<bucket_name>/topics/129a67850695.user/partition=0/```
-- Copy the dataframes to Global Temporary Views so they can be used in other notebooks.
+- Copy the dataframes to Global Temporary Views.
 
-### Cleaning and Transforming the Data
+#### Cleaning and Transforming the Data
 The cleaning of the incoming data is done in three separate notebooks. One for Pin data, one for Geo (location) data and one for user data.
 
-**Clean Pin Data.ipynb** performs the following transformations:
+**Clean Pin Data.py** performs the following transformations:
 - Drop duplicates and empty rows
 - Replace entries with no relevant data in each column with Nulls
 - Perform the necessary transformations on the follower_count to ensure every entry is a number and the data type of this column is integer
@@ -327,21 +330,21 @@ The cleaning of the incoming data is done in three separate notebooks. One for P
 - Rename the index column to ind
 - Reorder the dataframe
 
-**Clean Geo Data.ipynb** performs the following transformations:
+**Clean Geo Data.py** performs the following transformations:
 - Drop duplicates and empty rows
 - Create new coordinates column based on latitiude and longtitude
 - Drop latitude and longtitude
 - Convert timestamp to timestamp data type
 - Reorder the dataframe
 
-**Clean User Data.ipynb** performs the following transformations:
+**Clean User Data.py** performs the following transformations:
 - Drop duplicates and empty rows.
 - Combine first and last names.
 - Drop first_name and last_name.
 - Convert date_joined to timestamp data type.
 - Reorder the dataframe.
 
-### Data Analysis Using Spark
+#### Data Analysis Using Spark
 Spark was used to analyse the cleaned and transformed data in order to help inform business users of examples of potentially valuable metrics that can be derived from such data.
 
 The following queries were made using pySpark functions:
@@ -354,6 +357,28 @@ The following queries were made using pySpark functions:
 - Median follow count of users based on their joining year
 - Median follow count of users based on their joining year and age group
 
+### Airflow using AWS MWAA
+To orchestrate the workflows in Databricks we use Airflow running in Amazon's Managed Workflows for Apache Airflow (MWAA).
+
+Normally to configure MWAA to work with Databricks, we would need to do the following:
+1. Generate an access token in Databricks.
+2. Upload a requirements.txt file to an S3 bucket to let MWAA know the python libraries required to create a Databricks connection. This requirements.txt file will contain: ```apache-airflow[databricks]```.
+3. Specify the S3 bucket to the MWAA environment. As well as the requirements.txt location, this is also where the DAGs folder is located.
+4. Create a **connection** in the Airflow UI to connect to Databricks using the Databricks host URL and the access token.
+
+However, this has all already been done so we need only create the DAG (Directed Acyclic Graph) to orchestrate the Databricks workflow and upload it to the DAGs folder in the S3 bucket.
+
+The DAG **129a67850695_dag.py** is in this repository in the folder **dags**.
+It will run the notebook: **Access S3 Without Mounting.py**, then the cleaning notebooks: **Clean Pin Data.py**, **Clean Geo Data.py**, and **Clean User Data.py**. After all these are finished, it will run notebook: **Data Analyisis.py**. 
+The DAG is set to run daily, but can be run on demand.
+
+The dependency graph is below:
+![DAG](image-7.png)
+
+The DAG has been run successfully a few times as shown below:
+![Alt text](image-8.png)
+
+## Streaming Pipeline
 
 
 ## Usage instructions
@@ -371,18 +396,17 @@ To run this program:
 python check_user_posting_emulation.py
 ```
 ## File structure of the project:
-user_posting_emulation.py 
-
 Local Machine \
 |-- dags/ \
-&nbsp;&nbsp;&nbsp;&nbsp;|-- 0a3db223d459_dag.py \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- 129a67850695_dag.py \
 |-- databricks_notebooks/ \
-&nbsp;&nbsp;&nbsp;&nbsp;|-- access_keys.ipynb \
-&nbsp;&nbsp;&nbsp;&nbsp;|-- data_cleaning_tools.ipynb \
-&nbsp;&nbsp;&nbsp;&nbsp;|-- data_cleaning.ipynb \
-&nbsp;&nbsp;&nbsp;&nbsp;|-- data_sql_query.ipynb \
-&nbsp;&nbsp;&nbsp;&nbsp;|-- Mount S3 Bucket and Create Dataframes.ipynb \
-&nbsp;&nbsp;&nbsp;&nbsp;|-- stream_and_clean_kinesis_data.ipynb \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- Access S3 Without Mounting.py \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- Clean Geo Data.py \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- Clean Pin Data.py \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- Clean User Data.py \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- Data Analysis.py \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- Mount S3 Bucket and Create Dataframes.py \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- Unmount S3 Bucket.py \
 |-- .env.example \
 |-- user_posting_emulation.py \
 |-- check_user_posting_emulation.py \
