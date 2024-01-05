@@ -2,10 +2,10 @@
 # MAGIC %md
 # MAGIC #Access the S3 Bucket containing data from Kafka
 # MAGIC Because accessing S3 Buckets using Databricks filesystem mounts has been deprecated, this notebook implements the same functionality without creating a mount point. [See link.](https://docs.databricks.com/en/connect/storage/amazon-s3.html#deprecated-patterns-for-storing-and-accessing-data-from-databricks) 
-# MAGIC 1. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/198588058359572/command/198588058359579">Get the AWS authentication key file</a>
-# MAGIC 2. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/198588058359572/command/198588058359581">Extract the key values</a>
-# MAGIC 3. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/198588058359572/command/198588058359583">Create 3 dataframes from the 3 locations in the bucket</a>
-# MAGIC 4. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/198588058359572/command/198588058359592">Copy Dataframes to Global Temporary Views</a>
+# MAGIC 1. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/198588058359572/command/40535148915831">Get the AWS authentication key file</a>
+# MAGIC 2. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/198588058359572/command/40535148915833">Extract the key values</a>
+# MAGIC 3. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/198588058359572/command/40535148915835">Create 3 dataframes from the 3 locations in the bucket</a>
+# MAGIC 4. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/198588058359572/command/40535148915841">Copy Dataframes to Global Temporary Views</a>
 
 # COMMAND ----------
 
