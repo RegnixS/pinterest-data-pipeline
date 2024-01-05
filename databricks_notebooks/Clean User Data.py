@@ -1,12 +1,12 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC #Clean the User Data 
-# MAGIC 1. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624721/command/3974944181624723">Drop duplicates and empty rows.</a>
-# MAGIC 2. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624721/command/3974944181624725">Combine first and last names.</a>
-# MAGIC 3. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624721/command/3974944181624727">Drop first_name and last_name.</a>
-# MAGIC 4. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624721/command/3974944181624729">Convert date_joined to timestamp data type.</a>
-# MAGIC 5. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624721/command/3974944181624733">Reorder the dataframe.</a>
-# MAGIC 6. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624721/command/3974944181624735">Copy Cleaned Data to Global Temporary View</a>
+# MAGIC 1. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624721/command/40535148915789">Drop duplicates and empty rows.</a>
+# MAGIC 2. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624721/command/40535148915791">Combine first and last names.</a>
+# MAGIC 3. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624721/command/40535148915793">Drop first_name and last_name.</a>
+# MAGIC 4. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624721/command/40535148915795">Convert date_joined to timestamp data type.</a>
+# MAGIC 5. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624721/command/40535148915798">Reorder the dataframe.</a>
+# MAGIC 6. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624721/command/40535148915802">Copy Cleaned Data to Global Temporary View</a>
 
 # COMMAND ----------
 

@@ -1,15 +1,15 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC #Data Analysis
-# MAGIC 1. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624748/command/198588058359915">Create Dataframes from Global Temporary Views</a>
-# MAGIC 2. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624748/command/3974944181624754">Most popular category in each country</a>
-# MAGIC 3. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624748/command/1019958287663025">Most popular category each year</a>
-# MAGIC 4. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624748/command/1071625537364147">Most followers in each country</a>
-# MAGIC 5. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624748/command/2477640128388017">Most popular category for different age groups</a>
-# MAGIC 6. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624748/command/198588058359651">Median follower count for different age groups</a>
-# MAGIC 7. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624748/command/198588058359653">How many users have joined each year</a>
-# MAGIC 8. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624748/command/198588058360003">Median follow count of users based on their joining year</a>
-# MAGIC 9. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624748/command/198588058360026">Median follow count of users based on their joining year and age group</a>
+# MAGIC 1. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624748/command/40535148915844">Create Dataframes from Global Temporary Views</a>
+# MAGIC 2. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624748/command/40535148915846">Most popular category in each country</a>
+# MAGIC 3. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624748/command/40535148915848">Most popular category each year</a>
+# MAGIC 4. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624748/command/40535148915850">Most followers in each country</a>
+# MAGIC 5. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624748/command/40535148915854">Most popular category for different age groups</a>
+# MAGIC 6. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624748/command/40535148915858">Median follower count for different age groups</a>
+# MAGIC 7. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624748/command/40535148915860">How many users have joined each year</a>
+# MAGIC 8. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624748/command/40535148915862">Median follow count of users based on their joining year</a>
+# MAGIC 9. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624748/command/40535148915864">Median follow count of users based on their joining year and age group</a>
 
 # COMMAND ----------
 

@@ -1,11 +1,11 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC #Mount the S3 Bucket containing data from Kafka
-# MAGIC 1. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/973155298461779/command/973155298461784">Get the AWS authentication key file</a> 
-# MAGIC 2. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/973155298461779/command/973155298462121">Extract the key values</a>
-# MAGIC 3. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/973155298461779/command/973155298461783">Mount the S3 bucket</a>
-# MAGIC 4. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/973155298461779/command/973155298462122">Create 3 dataframes from the 3 locations in the mounted bucket</a>
-# MAGIC 5. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/973155298461779/command/2562161702425375">Copy Dataframes to Global Temporary Views</a>
+# MAGIC 1. Get the AWS authentication key file 
+# MAGIC 2. Extract the key values
+# MAGIC 3. Mount the S3 bucket
+# MAGIC 4. Create 3 dataframes from the 3 locations in the mounted bucket
+# MAGIC 5. Copy Dataframes to Global Temporary Views
 # MAGIC
 
 # COMMAND ----------
@@ -131,7 +131,3 @@ display(df_user)
 df_pin.createOrReplaceGlobalTempView("df_129a67850695_pin")
 df_geo.createOrReplaceGlobalTempView("df_129a67850695_geo")
 df_user.createOrReplaceGlobalTempView("df_129a67850695_user")
-
-# COMMAND ----------
-
-

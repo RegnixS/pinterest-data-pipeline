@@ -1,13 +1,13 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC #Clean the Pin Data 
-# MAGIC 1. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/4155037068217984/command/4155037068218046">Drop duplicates and empty rows</a>
-# MAGIC 2. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/4155037068217984/command/4155037068218047">Replace entries with no relevant data in each column with Nulls</a>
-# MAGIC 3. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/4155037068217984/command/4155037068218053">Perform the necessary transformations on the follower_count to ensure every entry is a number and the data type of this column is integer</a>
-# MAGIC 5. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/4155037068217984/command/4155037068218426">Clean the data in the save_location column to include only the save location path</a>
-# MAGIC 6. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/4155037068217984/command/4155037068218427">Rename the index column to ind</a>
-# MAGIC 7. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/4155037068217984/command/4155037068218431">Reorder the dataframe</a>
-# MAGIC 8. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/4155037068217984/command/4155037068218429">Copy Cleaned Data to Global Temporary View</a>
+# MAGIC 1. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/4155037068217984/command/40535148915816">Drop duplicates and empty rows</a>
+# MAGIC 2. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/4155037068217984/command/40535148915818">Replace entries with no relevant data in each column with Nulls</a>
+# MAGIC 3. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/4155037068217984/command/40535148915820">Perform the necessary transformations on the follower_count to ensure every entry is a number and the data type of this column is integer</a>
+# MAGIC 5. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/4155037068217984/command/40535148915822">Clean the data in the save_location column to include only the save location path</a>
+# MAGIC 6. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/4155037068217984/command/40535148915824">Rename the index column to ind</a>
+# MAGIC 7. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/4155037068217984/command/40535148915826">Reorder the dataframe</a>
+# MAGIC 8. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/4155037068217984/command/40535148915828">Copy Cleaned Data to Global Temporary View</a>
 
 # COMMAND ----------
 
