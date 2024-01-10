@@ -2,10 +2,9 @@
 # MAGIC %md
 # MAGIC #Mount the S3 Bucket containing data from Kafka
 # MAGIC 1. Get the AWS authentication key file 
-# MAGIC 2. Extract the key values
-# MAGIC 3. Mount the S3 bucket
-# MAGIC 4. Create 3 dataframes from the 3 locations in the mounted bucket
-# MAGIC 5. Copy Dataframes to Global Temporary Views
+# MAGIC 2. Mount the S3 bucket
+# MAGIC 3. Create 3 dataframes from the 3 locations in the mounted bucket
+# MAGIC 4. Copy Dataframes to Global Temporary Views
 # MAGIC
 
 # COMMAND ----------
@@ -15,29 +14,7 @@
 
 # COMMAND ----------
 
-# pyspark functions
-from pyspark.sql.functions import *
-# URL processing
-import urllib
-
-# Define the path to the Delta table
-delta_table_path = "dbfs:/user/hive/warehouse/authentication_credentials"
-
-# Read the Delta table to a Spark DataFrame
-aws_keys_df = spark.read.format("delta").load(delta_table_path)
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ##Extract access keys
-
-# COMMAND ----------
-
-# Get the AWS access key and secret key from the spark dataframe
-ACCESS_KEY = aws_keys_df.select('Access key ID').collect()[0]['Access key ID']
-SECRET_KEY = aws_keys_df.select('Secret access key').collect()[0]['Secret access key']
-# Encode the secret key
-ENCODED_SECRET_KEY = urllib.parse.quote(string=SECRET_KEY, safe="")
+# MAGIC %run "/Repos/rgducke@gmail.com/pinterest-data-pipeline/databricks_notebooks/Get Authentication Keys"
 
 # COMMAND ----------
 
@@ -128,6 +105,6 @@ display(df_user)
 
 # COMMAND ----------
 
-df_pin.createOrReplaceGlobalTempView("df_129a67850695_pin")
-df_geo.createOrReplaceGlobalTempView("df_129a67850695_geo")
-df_user.createOrReplaceGlobalTempView("df_129a67850695_user")
+df_pin.createOrReplaceGlobalTempView("gtv_129a67850695_pin")
+df_geo.createOrReplaceGlobalTempView("gtv_129a67850695_geo")
+df_user.createOrReplaceGlobalTempView("gtv_129a67850695_user")

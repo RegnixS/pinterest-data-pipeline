@@ -2,10 +2,10 @@
 # MAGIC %md
 # MAGIC #Access the S3 Bucket containing data from Kafka
 # MAGIC Because accessing S3 Buckets using Databricks filesystem mounts has been deprecated, this notebook implements the same functionality without creating a mount point. [See link.](https://docs.databricks.com/en/connect/storage/amazon-s3.html#deprecated-patterns-for-storing-and-accessing-data-from-databricks) 
-# MAGIC 1. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/198588058359572/command/40535148915831">Get the AWS authentication key file</a>
-# MAGIC 2. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/198588058359572/command/40535148915833">Extract the key values</a>
-# MAGIC 3. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/198588058359572/command/40535148915835">Create 3 dataframes from the 3 locations in the bucket</a>
-# MAGIC 4. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/198588058359572/command/40535148915841">Copy Dataframes to Global Temporary Views</a>
+# MAGIC 1. Get the AWS authentication key file
+# MAGIC 2. Define Bucket Name
+# MAGIC 3. Create 3 dataframes from the 3 locations in the bucket
+# MAGIC 4. Copy Dataframes to Global Temporary Views
 
 # COMMAND ----------
 
@@ -14,29 +14,14 @@
 
 # COMMAND ----------
 
-# pyspark functions
-from pyspark.sql.functions import *
-# URL processing
-import urllib
-
-# Define the path to the Delta table
-delta_table_path = "dbfs:/user/hive/warehouse/authentication_credentials"
-
-# Read the Delta table to a Spark DataFrame
-aws_keys_df = spark.read.format("delta").load(delta_table_path)
+# MAGIC %run "/Repos/rgducke@gmail.com/pinterest-data-pipeline/databricks_notebooks/Get Authentication Keys"
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ##Extract access keys
+# MAGIC ##Define Bucket Name
 
 # COMMAND ----------
-
-# Get the AWS access key and secret key from the spark dataframe
-ACCESS_KEY = aws_keys_df.select('Access key ID').collect()[0]['Access key ID']
-SECRET_KEY = aws_keys_df.select('Secret access key').collect()[0]['Secret access key']
-# Encode the secret key
-ENCODED_SECRET_KEY = urllib.parse.quote(string=SECRET_KEY, safe="")
 
 # AWS S3 bucket name
 AWS_S3_BUCKET = "user-129a67850695-bucket"
@@ -108,6 +93,6 @@ display(df_user)
 
 # COMMAND ----------
 
-df_pin.createOrReplaceGlobalTempView("df_129a67850695_pin")
-df_geo.createOrReplaceGlobalTempView("df_129a67850695_geo")
-df_user.createOrReplaceGlobalTempView("df_129a67850695_user")
+df_pin.createOrReplaceGlobalTempView("gtv_129a67850695_pin")
+df_geo.createOrReplaceGlobalTempView("gtv_129a67850695_geo")
+df_user.createOrReplaceGlobalTempView("gtv_129a67850695_user")

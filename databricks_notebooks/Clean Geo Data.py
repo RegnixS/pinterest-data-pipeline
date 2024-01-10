@@ -1,21 +1,33 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC #Clean the Geo Data 
-# MAGIC 1. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624684/command/40535148915799">Drop duplicates and empty rows</a>
-# MAGIC 2. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624684/command/40535148915803">Create new coordinates column based on latitiude and longtitude</a>
-# MAGIC 3. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624684/command/40535148915806">Drop latitude and longtitude</a>
-# MAGIC 5. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624684/command/40535148915808">Convert timestamp to timestamp data type</a>
-# MAGIC 6. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624684/command/40535148915810">Reorder the dataframe</a>
-# MAGIC 7. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624684/command/40535148915812">Copy Cleaned Data to Global Temporary View</a>
+# MAGIC 1. Initialize and drop duplicates
+# MAGIC 2. Create new coordinates column based on latitiude and longtitude
+# MAGIC 3. Drop latitude and longtitude
+# MAGIC 5. Convert timestamp to timestamp data type
+# MAGIC 6. Reorder the dataframe
+# MAGIC 7. Copy Cleaned Data to Global Temporary View
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ##Drop duplicates and empty rows
+# MAGIC ##Initialize notebook and drop duplicates
 
 # COMMAND ----------
 
-df_geo = spark.table("global_temp.df_129a67850695_geo")
+# Define the input parameter with a default of "Batch" for batch processing
+dbutils.widgets.dropdown("mode", "Batch", ["Batch"])
+print("Running in " + dbutils.widgets.get("mode") + " mode.")
+
+# If "Batch" or "Stream" mode, use appropriate temp view
+if(dbutils.widgets.get("mode") == "Batch"):
+    df_geo = spark.table("global_temp.gtv_129a67850695_geo")
+elif(dbutils.widgets.get("mode") == "Stream"):
+    df_pin = spark.table("global_temp.gtv_129a67850695_stream_geo")
+else:
+    raise Exception("Incorrect input for mode parameter")
+
+# Drop duplicates
 df_geo_clean = df_geo.distinct()
 df_geo_clean = df_geo_clean.dropna()
 
@@ -57,7 +69,7 @@ df_geo_clean = df_geo_clean.withColumn("timestamp", to_timestamp("timestamp"))
 # COMMAND ----------
 
 df_geo_clean = df_geo_clean.select("ind", "country", "coordinates", "timestamp")
-df_geo_clean.display()
+df_geo_clean.limit(5).display()
 
 # COMMAND ----------
 
@@ -66,4 +78,9 @@ df_geo_clean.display()
 
 # COMMAND ----------
 
-df_geo_clean.createOrReplaceGlobalTempView("df_129a67850695_geo_clean")
+# If "Batch" or "Stream" mode, use appropriate temp view
+if (dbutils.widgets.get("mode") == "Batch"):
+    df_geo_clean.createOrReplaceGlobalTempView("gtv_129a67850695_geo_clean")
+elif(dbutils.widgets.get("mode") == "Stream"):
+    df_geo_clean.createOrReplaceGlobalTempView("gtv_129a67850695_stream_geo_clean")
+print("Global Temp View created for " + dbutils.widgets.get("mode") + " mode.")

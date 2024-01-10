@@ -1,23 +1,34 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC #Clean the User Data 
-# MAGIC 1. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624721/command/40535148915789">Drop duplicates and empty rows.</a>
-# MAGIC 2. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624721/command/40535148915791">Combine first and last names.</a>
-# MAGIC 3. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624721/command/40535148915793">Drop first_name and last_name.</a>
-# MAGIC 4. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624721/command/40535148915795">Convert date_joined to timestamp data type.</a>
-# MAGIC 5. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624721/command/40535148915798">Reorder the dataframe.</a>
-# MAGIC 6. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624721/command/40535148915802">Copy Cleaned Data to Global Temporary View</a>
+# MAGIC 1. Initialize and drop duplicates
+# MAGIC 2. Combine first and last names
+# MAGIC 3. Drop first_name and last_name
+# MAGIC 4. Convert date_joined to timestamp data type
+# MAGIC 5. Reorder the dataframe
+# MAGIC 6. Copy Cleaned Data to Global Temporary View
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ##Drop duplicates and empty rows
+# MAGIC ##Initialize notebook and drop duplicates
 
 # COMMAND ----------
 
-df_user = spark.table("global_temp.df_129a67850695_user")
+# Define the input parameter with a default of "Batch" for batch processing
+dbutils.widgets.dropdown("mode", "Batch", ["Batch"])
+print("Running in " + dbutils.widgets.get("mode") + " mode.")
+
+# If "Batch" or "Stream" mode, use appropriate temp view
+if (dbutils.widgets.get("mode") == "Batch"):
+    df_user = spark.table("global_temp.gtv_129a67850695_user")
+elif(dbutils.widgets.get("mode") == "Stream"):
+    df_pin = spark.table("global_temp.gtv_129a67850695_stream_user")
+else:
+    raise Exception("Incorrect input for mode parameter")
+
+# Drop duplicates
 df_user_clean = df_user.distinct()
-df_user_clean = df_user_clean.dropna()
 
 # COMMAND ----------
 
@@ -57,7 +68,7 @@ df_user_clean = df_user_clean.withColumn("date_joined", to_timestamp("date_joine
 # COMMAND ----------
 
 df_user_clean = df_user_clean.select("ind", "age", "user_name", "date_joined")
-df_user_clean.display()
+df_user_clean.limit(5).display()
 
 # COMMAND ----------
 
@@ -66,4 +77,9 @@ df_user_clean.display()
 
 # COMMAND ----------
 
-df_user_clean.createOrReplaceGlobalTempView("df_129a67850695_user_clean")
+# If "Batch" or "Stream" mode, use appropriate temp view
+if (dbutils.widgets.get("mode") == "Batch"):
+    df_user_clean.createOrReplaceGlobalTempView("gtv_129a67850695_user_clean")
+elif(dbutils.widgets.get("mode") == "Stream"):
+    df_user_clean.createOrReplaceGlobalTempView("gtv_129a67850695_stream_user_clean")
+print("Global Temp View created for " + dbutils.widgets.get("mode") + " mode.")
