@@ -72,6 +72,7 @@ Further computations were done on the data using Apache Spark on Databricks, inc
 ## Install Instructions
 Although much of the work in this project is configuring the tech stack in the cloud, this repository contains implementation documentation and some python code to be run locally.
 
+### Local Clone
 To clone this Github repository, run the following: 
 ```bash
 git clone https://github.com/RegnixS/pinterest-data-pipeline.git <your_repo>
@@ -87,6 +88,10 @@ A Conda environment can be created from the requirements.txt file in this reposi
 ```bash
 conda create -n <your_env> --file requirements.txt
 ```
+
+### Databricks Clone
+
+To clone the Databricks notebooks in your own workspace, create a new ```Repo``` in your workspace using the repository URL: ```https://github.com/RegnixS/pinterest-data-pipeline.git```
 
 ## Creating the Batch Pipeline
 The following is a step by step guide of how to create the batch pipeline.
@@ -301,11 +306,13 @@ Now that the access keys are available from within the Databricks file store, we
 
 In some notebooks, resultant dataframes have been copied to Global Temporary Views to make them available to other notebooks. In these cases, "129a67850695" has been added to the name so other developers will not overwrite them by using similar names.
 
-**Get Authentication Keys.py** accesses the authentication keys file in the Databricks file store and loads the keys to a dataframe.
+**Get Authentication Keys.py** accesses the authentication keys file in the Databricks file store and loads the keys to a dataframe. \
+Note: This notebook has to be in the same folder as the calling notebook.
 
 **Mount S3 Bucket.py** performs the following tasks:
-- Runs the **Get Authentication Keys.py** notebook inline to access the keys using: ```%run "/path_to_notebook/Get Authentication Keys"```
-- Mount the S3 bucket using the bucket URI and keys. 
+- Runs the **Get Authentication Keys.py** notebook inline to access the keys using: ```%run "./Get Authentication Keys"```
+- Mount the S3 bucket using the bucket URI and keys.
+- Defines the read_from_S3 function 
 - Read the pin data from: ```/mnt/<bucket_name>/topics/129a67850695.pin/partition=0/```
 - Read the geo data from: ```/mnt/<bucket_name>/topics/129a67850695.geo/partition=0/```
 - Read the user data from: ```/mnt/<bucket_name>/topics/129a67850695.user/partition=0/```
@@ -317,8 +324,9 @@ In some notebooks, resultant dataframes have been copied to Global Temporary Vie
 While working on the project I discovered that Databricks no longer recommends mounting external data sources to the Databricks filesystem, so I made a new notebook. [See link.](https://docs.databricks.com/en/connect/storage/amazon-s3.html#deprecated-patterns-for-storing-and-accessing-data-from-databricks)
 
 **Access S3 Without Mounting.py** performs the following tasks similar to the previous notebook, but reads directly from the S3 bucket using the access keys and S3 URI without needing a mount:
-- Runs the **Get Authentication Keys.py** notebook inline to access the keys using: ```%run "/path_to_notebook/Get Authentication Keys"```
+- Runs the **Get Authentication Keys.py** notebook inline to access the keys using: ```%run "./Get Authentication Keys"```
 - Defines the bucket name
+- Defines the read_from_S3 function
 - Read the pin data from: ```/mnt/<bucket_name>/topics/129a67850695.pin/partition=0/``` 
 - Read the geo data from: ```/mnt/<bucket_name>/topics/129a67850695.geo/partition=0/```
 - Read the user data from: ```/mnt/<bucket_name>/topics/129a67850695.user/partition=0/```
@@ -516,9 +524,10 @@ Each of these notebooks have had a widget named ```mode``` added with a value de
 This allows the notebooks to behave in exactly the same way as before, including when being run from the DAG in Airflow. \
 The difference is that these notebooks can be run from another notebook with the parameter for ```mode``` set to "Stream" like so:
 ```
-%run "/path_to_notebook/Clean xxx Data" $mode="Stream"
+%run "./Clean xxx Data" $mode="Stream"
 ```
-By doing so, they can perform the same cleaing functions using the streaming dataframes instead of the batch ones.
+By doing so, they can perform the same cleaning functions using the streaming dataframes instead of the batch ones. \
+Note: The called notebook has to be in the same folder as the calling notebook.
 
 #### Spark Streaming Notebook
 **Kinesis Streaming.py** executes the following processes:
@@ -565,13 +574,16 @@ python user_posting_emulation.py
 ```
 ### Databricks notebooks
 Within the Databricks workspace navigate to the following location:
-```/Repos/rgducke@gmail.com/pinterest-data-pipeline/```
+```/Repos/<your_username>/<your_repo>/databricks_notebooks/``` \
+e.g: 
+```/Repos/rgducke@gmail.com/pinterest-data-pipeline/databricks_notebooks/```
 
 To process the batch pipeline, run the following notebooks in order:
 1. **Access S3 Without Mounting**
 2. **Clean Pin Data**
 3. **Clean Geo Date**
 4. **Clean USer Data**
+5. **Data Analysis**
 
 Alternatively, trigger the DAG ```129a67850695_dag``` in the MWAA Airflow UI.
 
