@@ -1,15 +1,15 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC #Data Analysis
-# MAGIC 1. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624748/command/40535148915844">Create Dataframes from Global Temporary Views</a>
-# MAGIC 2. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624748/command/40535148915846">Most popular category in each country</a>
-# MAGIC 3. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624748/command/40535148915848">Most popular category each year</a>
-# MAGIC 4. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624748/command/40535148915850">Most followers in each country</a>
-# MAGIC 5. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624748/command/40535148915854">Most popular category for different age groups</a>
-# MAGIC 6. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624748/command/40535148915858">Median follower count for different age groups</a>
-# MAGIC 7. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624748/command/40535148915860">How many users have joined each year</a>
-# MAGIC 8. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624748/command/40535148915862">Median follow count of users based on their joining year</a>
-# MAGIC 9. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/3974944181624748/command/40535148915864">Median follow count of users based on their joining year and age group</a>
+# MAGIC 1. Create Dataframes from Global Temporary Views
+# MAGIC 2. Most popular category in each country
+# MAGIC 3. Most popular category each year
+# MAGIC 4. Most followers in each country
+# MAGIC 5. Most popular category for different age groups
+# MAGIC 6. Median follower count for different age groups
+# MAGIC 7. How many users have joined each year
+# MAGIC 8. Median follow count of users based on their joining year
+# MAGIC 9. Median follow count of users based on their joining year and age group
 
 # COMMAND ----------
 
@@ -18,9 +18,9 @@
 
 # COMMAND ----------
 
-df_pin = spark.table("global_temp.df_129a67850695_pin_clean")
-df_geo = spark.table("global_temp.df_129a67850695_geo_clean")
-df_user = spark.table("global_temp.df_129a67850695_user_clean")
+df_pin = spark.table("global_temp.gtv_129a67850695_pin_clean")
+df_geo = spark.table("global_temp.gtv_129a67850695_geo_clean")
+df_user = spark.table("global_temp.gtv_129a67850695_user_clean")
 
 # COMMAND ----------
 
@@ -165,8 +165,10 @@ from pyspark.sql.functions import percentile_approx
 # Find median values of "follower_count" for each "age_group"
 # median() function has been deprecated, so we use percentile_approx() instead where 0.5 is the halfway point like median
 # Order by "age_group"
-df_median_follower_counts_by_age_group = df_pin.join(df_user_with_age_groups.dropDuplicates(["user_name","age"]), \
-    df_pin["ind"] == df_user_with_age_groups["ind"]) \
+df_median_follower_counts_by_age_group = df_pin.join(
+        df_user_with_age_groups.dropDuplicates(["user_name","age"]), 
+        df_pin["ind"] == df_user_with_age_groups["ind"]
+    ) \
     .groupby("age_group").agg(percentile_approx("follower_count", 0.5).alias("median_follower_count")) \
     .orderBy("age_group") \
     .display()
@@ -207,8 +209,10 @@ from pyspark.sql.functions import percentile_approx
 # median() function has been deprecated, so we use percentile_approx() instead where 0.5 is the halfway point like median
 # Order by "post_year"
 # Filter between 2015 and 2020
-df_median_follower_counts_by_joining_year = df_pin.join(df_user.dropDuplicates(["user_name","age"]), \
-    df_pin["ind"] == df_user["ind"]) \
+df_median_follower_counts_by_joining_year = df_pin.join(
+        df_user.dropDuplicates(["user_name","age"]),
+        df_pin["ind"] == df_user["ind"]
+    ) \
     .withColumn("post_year", year("date_joined")) \
     .groupby("post_year").agg(percentile_approx("follower_count", 0.5).alias("median_follower_count")) \
     .orderBy("post_year") \
@@ -229,8 +233,10 @@ from pyspark.sql.functions import percentile_approx
 # median() function has been deprecated, so we use percentile_approx() instead where 0.5 is the halfway point like median
 # Order by "age_group" and "post_year"
 # Filter between 2015 and 2020
-df_median_follower_counts_by_joining_year_and_age_group = df_pin.join(df_user_with_age_groups.dropDuplicates(["user_name","age"]), \
-    df_pin["ind"] == df_user_with_age_groups["ind"]) \
+df_median_follower_counts_by_joining_year_and_age_group = df_pin.join(
+        df_user_with_age_groups.dropDuplicates(["user_name","age"]),
+        df_pin["ind"] == df_user_with_age_groups["ind"]
+    ) \
     .withColumn("post_year", year("date_joined")) \
     .groupby("age_group", "post_year").agg(percentile_approx("follower_count", 0.5).alias("median_follower_count")) \
     .orderBy("age_group", "post_year") \

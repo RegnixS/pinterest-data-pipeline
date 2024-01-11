@@ -1,24 +1,35 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC #Clean the Pin Data 
-# MAGIC 1. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/4155037068217984/command/40535148915816">Drop duplicates and empty rows</a>
-# MAGIC 2. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/4155037068217984/command/40535148915818">Replace entries with no relevant data in each column with Nulls</a>
-# MAGIC 3. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/4155037068217984/command/40535148915820">Perform the necessary transformations on the follower_count to ensure every entry is a number and the data type of this column is integer</a>
-# MAGIC 5. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/4155037068217984/command/40535148915822">Clean the data in the save_location column to include only the save location path</a>
-# MAGIC 6. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/4155037068217984/command/40535148915824">Rename the index column to ind</a>
-# MAGIC 7. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/4155037068217984/command/40535148915826">Reorder the dataframe</a>
-# MAGIC 8. <a href="https://dbc-b54c5c54-233d.cloud.databricks.com/?o=1865928197306450#notebook/4155037068217984/command/40535148915828">Copy Cleaned Data to Global Temporary View</a>
+# MAGIC 1. Initialize and drop duplicates
+# MAGIC 2. Replace entries with no relevant data in each column with nulls
+# MAGIC 3. Perform the necessary transformations on the follower_count to ensure every entry is a number and the data type of this column is integer
+# MAGIC 5. Clean the data in the save_location column to include only the save location path
+# MAGIC 6. Rename the index column to ind
+# MAGIC 7. Reorder the dataframe
+# MAGIC 8. Copy cleaned data to Global Temporary View
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ##Drop duplicates and empty rows
+# MAGIC ##Initialize notebook and drop duplicates
 
 # COMMAND ----------
 
-df_pin = spark.table("global_temp.df_129a67850695_pin")
+# Define the input parameter with a default of "Batch" for batch processing
+dbutils.widgets.dropdown("mode", "Batch", ["Batch"])
+print("Running in " + dbutils.widgets.get("mode") + " mode.")
+
+# If "Batch" or "Stream" mode, use appropriate temp view
+if (dbutils.widgets.get("mode") == "Batch"):
+    df_pin = spark.table("global_temp.gtv_129a67850695_pin")
+elif(dbutils.widgets.get("mode") == "Stream"):
+    df_pin = spark.table("global_temp.gtv_129a67850695_stream_pin")
+else:
+    raise Exception("Incorrect input for mode parameter")
+
+# Drop duplicates
 df_pin_clean = df_pin.distinct()
-df_pin_clean = df_pin_clean.dropna()
 
 # COMMAND ----------
 
@@ -72,7 +83,7 @@ df_pin_clean = df_pin_clean.withColumnRenamed("index", "ind")
 # COMMAND ----------
 
 df_pin_clean = df_pin_clean.select("ind", "unique_id", "title", "description", "follower_count", "poster_name", "tag_list", "is_image_or_video", "image_src", "save_location", "category")
-df_pin_clean.display()
+df_pin_clean.limit(5).display()
 
 # COMMAND ----------
 
@@ -81,4 +92,9 @@ df_pin_clean.display()
 
 # COMMAND ----------
 
-df_pin_clean.createOrReplaceGlobalTempView("df_129a67850695_pin_clean")
+# If "Batch" or "Stream" mode, use appropriate temp view
+if (dbutils.widgets.get("mode") == "Batch"):
+    df_pin_clean.createOrReplaceGlobalTempView("gtv_129a67850695_pin_clean")
+elif(dbutils.widgets.get("mode") == "Stream"):
+    df_pin_clean.createOrReplaceGlobalTempView("gtv_129a67850695_stream_pin_clean")
+print("Global Temp View created for " + dbutils.widgets.get("mode") + " mode.")
