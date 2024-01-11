@@ -21,7 +21,7 @@
 
 # COMMAND ----------
 
-# MAGIC %run "/Repos/rgducke@gmail.com/pinterest-data-pipeline/databricks_notebooks/Get Authentication Keys"
+# MAGIC %run "./Get Authentication Keys"
 
 # COMMAND ----------
 
@@ -108,7 +108,7 @@ df_pin.createOrReplaceGlobalTempView("gtv_129a67850695_stream_pin")
 
 # COMMAND ----------
 
-# MAGIC %run "/Repos/rgducke@gmail.com/pinterest-data-pipeline/databricks_notebooks/Clean Pin Data" $mode="Stream"
+# MAGIC %run "./Clean Pin Data" $mode="Stream"
 
 # COMMAND ----------
 
@@ -148,7 +148,7 @@ df_geo.createOrReplaceGlobalTempView("gtv_129a67850695_stream_geo")
 
 # COMMAND ----------
 
-# MAGIC %run "/Repos/rgducke@gmail.com/pinterest-data-pipeline/databricks_notebooks/Clean Geo Data" $mode="Stream"
+# MAGIC %run "./Clean Geo Data" $mode="Stream"
 
 # COMMAND ----------
 
@@ -188,7 +188,7 @@ df_user.createOrReplaceGlobalTempView("gtv_129a67850695_stream_user")
 
 # COMMAND ----------
 
-# MAGIC %run "/Repos/rgducke@gmail.com/pinterest-data-pipeline/databricks_notebooks/Clean User Data" $mode="Stream"
+# MAGIC %run "./Clean User Data" $mode="Stream"
 
 # COMMAND ----------
 
