@@ -18,7 +18,7 @@
     * [API Gateway with Kinesis Integration](#api-gateway-with-kinesis-integration)
     * [Pinterest User Posting Emulator for Streaming](#pinterest-user-posting-emulator-for-streaming)
     * [Spark Streaming in Databricks](#spark-streaming-in-databricks)
- - [Usage Instructions][def]
+ - [Usage Instructions](#usage-instructions)
  - [File Structure](#File-Structure)
  - [License](#License)
 
