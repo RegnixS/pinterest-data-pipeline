@@ -408,7 +408,7 @@ From here we edit the **integration request** and define the following:
 - **Mapping Templates**
    * **Content Type** application-json
    * **Template Body** 
-      ```json
+      ```
       {
          "ExclusiveStartStreamName": #if($input.params('ExclusiveStartStreamName') == '') "-" #else "$input.params('ExclusiveStartStreamName')" #end,
          "Limit": #if($input.params('Limit') == '') 100 #else $input.params('Limit') #end
@@ -423,7 +423,7 @@ For ```GET```:
 - **Action Name** ```DescribeStream```
 - **Mapping Templates**
    * **Template Body** 
-      ```json
+      ```
       {
          "StreamName": "$input.params('stream-name')"
       }
@@ -433,7 +433,7 @@ For ```POST```:
 - **Action Name** ```CreateStream```
 - **Mapping Templates**
    * **Template Body** 
-      ```json
+      ```
       {
          "ShardCount": #if(input.path('.ShardCount') == '') 5 #else input.path('.ShardCount') #end, 
          "StreamName": "$input.params('stream-name')"
@@ -444,7 +444,7 @@ For ```DELETE```:
 - **Action Name** ```DeleteStream```
 - **Mapping Templates**
    * **Template Body** 
-      ```json
+      ```
       {
          "StreamName": "$input.params('stream-name')"
       }
@@ -457,7 +457,7 @@ The methods and integration requests are created in the same way as the methods 
 - **Action Name** ```PutRecord```
 - **Mapping Templates**
    * **Template Body** 
-      ```json
+      ```
       {
          "StreamName": "$input.params('stream-name')",
          "Data": "$util.base64Encode($input.json('$.Data'))",
@@ -468,7 +468,7 @@ The methods and integration requests are created in the same way as the methods 
 - **Action Name** ```PutRecords```
 - **Mapping Templates**
    * **Template Body** 
-      ```json
+      ```
       {
          "StreamName": "$input.params('stream-name')",
          "Records": [
