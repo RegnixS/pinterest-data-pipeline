@@ -325,7 +325,6 @@ While working on the project I discovered that Databricks no longer recommends m
 
 **Access S3 Without Mounting.py** performs the following tasks similar to the previous notebook, but reads directly from the S3 bucket using the access keys and S3 URI without needing a mount:
 - Runs the **Get Authentication Keys.py** notebook inline to access the keys using: ```%run "./Get Authentication Keys"```
-- Defines the bucket name
 - Defines the read_from_S3 function
 - Read the pin data from: ```/mnt/<bucket_name>/topics/129a67850695.pin/partition=0/``` 
 - Read the geo data from: ```/mnt/<bucket_name>/topics/129a67850695.geo/partition=0/```
