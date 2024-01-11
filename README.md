@@ -6,27 +6,32 @@
     * [Technologies Used](#technologies-used)
     * [Project Highlights](#project-highlights)
  - [Install Instructions](#install-instructions)
- - [Creating the Pipelines](#creating-the-pipelines)
+ - [Creating the Batch Pipeline](#creating-the-batch-pipeline)
     * [Kafka Client running on EC2](#kafka-client-running-on-ec2)
     * [MSK Connect](#msk-connect)
     * [API Gateway and Kafka REST Proxy](#api-gateway-and-kafka-rest-proxy)
     * [Pinterest User Posting Emulator](#pinterest-user-posting-emulator)
     * [Databricks and Spark](#databricks-and-spark)
     * [Airflow using AWS MWAA](#airflow-using-aws-mwaa)
+ - [Creating the Streaming Pipeline](#creating-the-streaming-pipeline)
+    * [Kinesis Data Streams](#kinesis-data-streams)
+    * [API Gateway with Kinesis Integration](#api-gateway-with-kinesis-integration)
+    * [Pinterest User Posting Emulator for Streaming](#pinterest-user-posting-emulator-for-streaming)
+    * [Spark Streaming in Databricks](#spark-streaming-in-databricks)
  - [Usage Instructions][def]
  - [File Structure](#File-Structure)
  - [License](#License)
 
 
 ## Description
-This project aims to use AWS Cloud to create a data pipeline similar to the one belonging to Pinterest that is capable of crunching billions of data points to help decide how to provide more value to their users.
+This project aims to use AWS Cloud to create a data pipeline similar to the one belonging to Pinterest that is capable of crunching billions of data points every day helping to decide how best to provide more value to their users.
 
 ### Pipeline Architecture
 The pipeline implemented is a Lambda architecture where you have both a batch processing pipeline and a streaming pipeline in parallel.
 
-![Alt text](aws.png)
+![Alt text](images/aws.png)
 #### Data Ingestion
-Data is sent to the API from the user_posting_emulation.py script, which provides a real-time stream of data, ready to be ingested and processed. The script infinitely generates random Pinterest posts extracted from a database. In the batch pipeline, the API forwards the data to the Kafka Client machine where acting as a producer, it writes events to Kafka topics and MSK drops it in the S3 data lake sink.
+Data is sent to the API using python scripts, which provide a real-time stream of data, ready to be ingested and processed. The scripts infinitely generate random Pinterest posts extracted from a database. In the batch pipeline, the API forwards the data to the Kafka Client machine where acting as a producer, it writes events to Kafka topics and MSK drops it in the AWS S3 data lake sink.
 In the streaming pipeline, the API forwards the data to AWS Kinesis.
 
 #### Data Processing
@@ -36,7 +41,7 @@ Apache Spark handles the data cleaning using PySpark running on Databricks. In t
 Apache Airflow is a task scheduling system which allows tasks to be created and managed. The Spark cleaning tasks for the batch processing pipeline have been automated to run daily.
 
 #### Data Storage
-For the batch processing pipeline, data is stored in the S3 data lake before being subsequently processed. For the streaming pipeline, the transformations are applied to incoming data stream. In both cases the cleaned data can be output to Delta tables in the Databricks Delta Lakehouse, back to S3 or anywhere else.
+For the batch processing pipeline, data is stored in the S3 data lake before being subsequently processed. For the streaming pipeline, the transformations are applied to the incoming data stream. In both cases the cleaned data can be output to Delta tables in the Databricks Delta Lakehouse, back to S3 or anywhere else.
 
 #### Data Analysis
 Further computations were done on the data using Apache Spark on Databricks, including such metrics as most popular categories by country, year or age group and users with the most followers based on country, joining year and age group.
@@ -56,7 +61,7 @@ Further computations were done on the data using Apache Spark on Databricks, inc
 - AWS Managed Workflows for Apache Airflow (MWAA): Fully managed service for Apache Airflow, simplifying the deployment and management of workflows.
 
 ### Project Highlights
-- Developed a robust data processing pipeline capable of handling large scale experimental data requirements. 
+- Developed a robust data processing pipeline capable of handling large scale data requirements. 
 - Implemented a Lambda architecture, combining batch processing and stream processing methods. 
 - Leveraged Kafka, MSK and Kinesis to handle scalable and fault-tolerant data streaming. 
 - Utilized Spark and Spark Structured Streaming for batch and real-time data processing and analytics.
@@ -65,7 +70,7 @@ Further computations were done on the data using Apache Spark on Databricks, inc
 - Orchestrated and scheduled workflows using Airflow and MWAA for efficient pipeline management.
 
 ## Install Instructions
-Although much of the work in this project is configuring the tech stack in the cloud, this repository contains this documentation and some python code to be run locally.
+Although much of the work in this project is configuring the tech stack in the cloud, this repository contains implementation documentation and some python code to be run locally.
 
 To clone this Github repository, run the following: 
 ```bash
@@ -83,8 +88,8 @@ A Conda environment can be created from the requirements.txt file in this reposi
 conda create -n <your_env> --file requirements.txt
 ```
 
-## Creating the pipelines
-The following is a step by step guide of how to create both the batch and streaming pipelines.
+## Creating the Batch Pipeline
+The following is a step by step guide of how to create the batch pipeline.
 
 ### Kafka Client running on EC2 
 A Kafka client is installed on an Amazon EC2 virtual machine. \
@@ -192,9 +197,9 @@ By installing a Confluent REST Proxy for Kafka on the EC2 instance, we can post 
 In the API Gateway console, create a REST type API with regional endpoint.
 
 Create a proxy resource with an ```ANY``` method like so:
-![Alt text](image.png)
-![Alt text](image-1.png)
-![Alt text](image-2.png)
+![Alt text](images/image.png)
+![Alt text](images/image-1.png)
+![Alt text](images/image-2.png)
 
 The **Endpoint URL** is the **Public IPv4 DNS** of the EC2 instance with the Kafka client. \
 **8082** is the default port the Confluent REST Proxy listens to.
@@ -203,7 +208,7 @@ Creating a {proxy+} resource with HTTP proxy integration allows a streamlined se
 All requests and responses are handled by the backend - in this case the Confluent REST Proxy on the EC2 instance.
 
 Deploy the API:
-![Alt text](image-3.png)
+![Alt text](images/image-3.png)
 Once deployed, the API is now accessible from the web.
 
 Install the Confluent Kafka REST Proxy on the EC2 instance:
@@ -241,15 +246,15 @@ The Kafka related modules are now ready to accept data from our Pinterest users.
 ### Pinterest User Posting Emulator
 #### Data Source
 In a MySQL database hosted on Amazon RDS in the cloud there resides 1000s of sample datasets that represent the information a Pinterest user may generate as they interact with their app. 
-There are 3 records per interaction representing 'pin' data, 'geo' or location data and 'user' data.
+There are 3 records per interaction representing 'pin' data, 'geo' (geolocation) data and 'user' data.
 
-The JSON formats of examples of each dataset are as follows:
+Example JSON formats of each dataset are as follows:
 ```
-{'index': 7528, 'unique_id': 'fbe53c66-3442-4773-b19e-d3ec6f54dddf', 'title': 'No Title Data Available', 'description': 'No description available Story format', 'poster_name': 'User Info Error', 'follower_count': 'User Info Error', 'tag_list': 'N,o, ,T,a,g,s, ,A,v,a,i,l,a,b,l,e', 'is_image_or_video': 'multi-video(story page format)', 'image_src': 'Image src error.', 'downloaded': 0, 'save_location': 'Local save in /data/mens-fashion', 'category': 'mens-fashion'}
+{"index": 10794, "unique_id": "c4bd2577-a7bb-4409-bb7a-17d5ed7e1cf1", "title": "TireBuyer", "description": "Nissan GT-R. Sick.", "poster_name": "Ray Uyemura", "follower_count": "437", "tag_list": "Lowrider,Old Vintage Cars,Antique Cars,Austin Martin,Nissan Gtr Black,Jaguar,1959 Cadillac,Cadillac Ct6,Old School Cars", "is_image_or_video": "image", "image_src": "https://i.pinimg.com/originals/0d/29/9f/0d299f3df020395aa7ce8387f40fbeed.jpg", "downloaded": 1, "save_location": "Local save in /data/vehicles", "category": "vehicles"}
 
-{'ind': 7528, 'timestamp': datetime.datetime(2020, 8, 28, 3, 52, 47), 'latitude': -89.9787, 'longitude': -173.293, 'country': 'Albania'}
+{"ind": 10794, "latitude": -89.5236, "longitude": -154.567, "country": "Cocos (Keeling) Islands", "timestamp": "2022-01-01 02:26:50"}
 
-{'ind': 7528, 'first_name': 'Abigail', 'last_name': 'Ali', 'age': 20, 'date_joined': datetime.datetime(2015, 10, 24, 11, 23, 51)}
+{"ind": 10794, "first_name": "Thomas", "last_name": "Turner", "age": 34, "date_joined": "2016-12-22 00:02:02"}
 ```
 
 The python program user_posting_emulation.py will infinitely read random datasets from the remote database at random intervals and then, using the ```requests``` python library, post them to the API we built earlier.
@@ -259,7 +264,7 @@ To run this program:
 python user_posting_emulation.py
 ```
 
-#### Testing Data is ingested by Kafka
+#### Testing whether data is ingested by Kafka
 To test whether the emulation is working, the python program check_user_posting_emulation.py will create Kafka consumers using the API and then consume the messages and output them to the JSON files: 
 - pin_consumer.json
 - geo_consumer.json
@@ -278,12 +283,12 @@ The CLI command must be run on the EC2 instance where Kafka is installed, but th
 
 #### Testing Data has been ingested and stored in S3
 To see if the data has gone through the Kafka via MSK and MSK Connect, we can look in the S3 data lake.
-![Alt text](image-4.png)
-![Alt text](image-5.png)
-![Alt text](image-6.png)
+![Alt text](images/image-4.png)
+![Alt text](images/image-5.png)
+![Alt text](images/image-6.png)
 
 ### Databricks and Spark
-#### Mount the S3 bucket to Databricks
+#### Accessing the S3 bucket from Databricks
 In order to access the S3 bucket containing the Kafka topics data, we first need to allow access to the bucket. 
 To do this we first need to create a user in IAM for the AWS account for Databricks to access. 
 Attach the existing permission policy ```S3FullAccess```.
@@ -294,12 +299,13 @@ Drop the key CSV file in the space and click **Create Table with UI**.
 
 Now that the access keys are available from within the Databricks file store, we can use them in our notebooks.
 
-In some notebooks, resultant dataframes have been copied to Global Temporary Views to make them available to other notebooks. In these cases, "129a67850695" has been added to the name so other users will not overwrite them by using similar names. 
+In some notebooks, resultant dataframes have been copied to Global Temporary Views to make them available to other notebooks. In these cases, "129a67850695" has been added to the name so other developers will not overwrite them by using similar names.
 
-**Mount S3 Bucket and Create Dataframes.py** performs the following tasks:
-- Access the authentication csv file in Databricks file store.
-- Read the access key information.
-- Mount the S3 bucket using the bucket URI and access key information. 
+**Get Authentication Keys.py** accesses the authentication keys file in the Databricks file store and loads the keys to a dataframe.
+
+**Mount S3 Bucket.py** performs the following tasks:
+- Runs the **Get Authentication Keys.py** notebook inline to access the keys using: ```%run "/path_to_notebook/Get Authentication Keys"```
+- Mount the S3 bucket using the bucket URI and keys. 
 - Read the pin data from: ```/mnt/<bucket_name>/topics/129a67850695.pin/partition=0/```
 - Read the geo data from: ```/mnt/<bucket_name>/topics/129a67850695.geo/partition=0/```
 - Read the user data from: ```/mnt/<bucket_name>/topics/129a67850695.user/partition=0/```
@@ -308,12 +314,11 @@ In some notebooks, resultant dataframes have been copied to Global Temporary Vie
 **Unmount S3 Bucket.py** will unmount the bucket after we are done with it. This would normally be after all the processing has been done using the data in the bucket.
 
 #### Access S3 Buckets Without Mounting
-While working on the project, there were security issues that affected the notebook: **Mount S3 Bucket and Create Dataframes.py**.
-I discovered that Databricks no longer recommends mounting external data sources to the Databricks filesystem, so I made a new notebook. 
+While working on the project I discovered that Databricks no longer recommends mounting external data sources to the Databricks filesystem, so I made a new notebook. [See link.](https://docs.databricks.com/en/connect/storage/amazon-s3.html#deprecated-patterns-for-storing-and-accessing-data-from-databricks)
 
 **Access S3 Without Mounting.py** performs the following tasks similar to the previous notebook, but reads directly from the S3 bucket using the access keys and S3 URI without needing a mount:
-- Access the authentication csv file in Databricks file store.
-- Read the access key information.
+- Runs the **Get Authentication Keys.py** notebook inline to access the keys using: ```%run "/path_to_notebook/Get Authentication Keys"```
+- Defines the bucket name
 - Read the pin data from: ```/mnt/<bucket_name>/topics/129a67850695.pin/partition=0/``` 
 - Read the geo data from: ```/mnt/<bucket_name>/topics/129a67850695.geo/partition=0/```
 - Read the user data from: ```/mnt/<bucket_name>/topics/129a67850695.user/partition=0/```
@@ -323,7 +328,7 @@ I discovered that Databricks no longer recommends mounting external data sources
 The cleaning of the incoming data is done in three separate notebooks. One for Pin data, one for Geo (location) data and one for user data.
 
 **Clean Pin Data.py** performs the following transformations:
-- Drop duplicates and empty rows
+- Drop duplicates
 - Replace entries with no relevant data in each column with Nulls
 - Perform the necessary transformations on the follower_count to ensure every entry is a number and the data type of this column is integer
 - Clean the data in the save_location column to include only the save location path
@@ -331,21 +336,21 @@ The cleaning of the incoming data is done in three separate notebooks. One for P
 - Reorder the dataframe
 
 **Clean Geo Data.py** performs the following transformations:
-- Drop duplicates and empty rows
+- Drop duplicates
 - Create new coordinates column based on latitiude and longtitude
 - Drop latitude and longtitude
 - Convert timestamp to timestamp data type
 - Reorder the dataframe
 
 **Clean User Data.py** performs the following transformations:
-- Drop duplicates and empty rows.
-- Combine first and last names.
-- Drop first_name and last_name.
-- Convert date_joined to timestamp data type.
-- Reorder the dataframe.
+- Drop duplicates
+- Combine first and last names
+- Drop first_name and last_name
+- Convert date_joined to timestamp data type
+- Reorder the dataframe
 
 #### Data Analysis Using Spark
-Spark was used to analyse the cleaned and transformed data in order to help inform business users of examples of potentially valuable metrics that can be derived from such data.
+In the notebook **Data Analysis.py**, Spark was used to analyse the cleaned and transformed data in order to help inform business users of some examples of potentially valuable metrics that can be derived from such data.
 
 The following queries were made using pySpark functions:
 - Most popular category in each country
@@ -366,24 +371,181 @@ Normally to configure MWAA to work with Databricks, we would need to do the foll
 3. Specify the S3 bucket to the MWAA environment. As well as the requirements.txt location, this is also where the DAGs folder is located.
 4. Create a **connection** in the Airflow UI to connect to Databricks using the Databricks host URL and the access token.
 
-However, this has all already been done so we need only create the DAG (Directed Acyclic Graph) to orchestrate the Databricks workflow and upload it to the DAGs folder in the S3 bucket.
+For this project, this has already been done so we need only create the DAG (Directed Acyclic Graph) to orchestrate the Databricks workflow and upload it to the DAGs folder in the S3 bucket.
 
 The DAG **129a67850695_dag.py** is in this repository in the folder **dags**.
-It will run the notebook: **Access S3 Without Mounting.py**, then the cleaning notebooks: **Clean Pin Data.py**, **Clean Geo Data.py**, and **Clean User Data.py**. After all these are finished, it will run notebook: **Data Analyisis.py**. 
+It will run the notebook: **Access S3 Without Mounting.py**, then the cleaning notebooks: **Clean Pin Data.py**, **Clean Geo Data.py**, and **Clean User Data.py**. After all these are finished, it will run notebook: **Data Analysis.py**. 
 The DAG is set to run daily, but can be run on demand.
 
 The dependency graph is below: \
-![DAG](image-7.png)
+![DAG](images/image-7.png)
 
 The DAG has been run successfully a few times as shown below: \
-![Alt text](image-8.png)
+![Alt text](images/image-8.png)
 
-## Streaming Pipeline
+## Creating the Streaming Pipeline
+### Kinesis Data Streams
+In the AWS Kinesis console three new Data Streams are created as shown: 
+![Alt text](images/image-9.png)
 
+### API Gateway with Kinesis Integration
+The API Gateway we created earlier will also be used to ingest the data for the Kinesis streams. 
+Unlike the proxy integration for Kafka where all requests are handled by the client, we have to define all the requests and the integration with Kinesis.
+
+First we create the ```streams``` resource:
+![Alt text](images/image-12.png)
+
+Under this we create the ```GET``` method for the Kinesis action ```ListStreams```.
+![Alt text](images/image-10.png)
+![Alt text](images/image-11.png)
+
+The **Execution role** here is an IAM role that can assume the **AmazonKinesisFullAccessRole** policy so API Gateway can perform Kinesis actions such as listing and describing streams and putting data to them.
+
+From here we edit the **integration request** and define the following:
+- **URL request headers parameters** 
+   * **Name** Content-Type
+   * **Mapped form type** 'application/x-amz-json-1.1'
+- **Mapping Templates**
+   * **Content Type** application-json
+   * **Template Body** 
+      ```json
+      {
+         "ExclusiveStartStreamName": #if($input.params('ExclusiveStartStreamName') == '') "-" #else "$input.params('ExclusiveStartStreamName')" #end,
+         "Limit": #if($input.params('Limit') == '') 100 #else $input.params('Limit') #end
+      }
+      ```
+
+Under the ```streams``` resource, we create the child resource ```{stream-name}``` under which we create the three methods: ```GET```, ```POST``` and ```DELETE```. 
+
+The methods and integration requests are created in the same way as the ```GET``` method for ```ListStreams``` except for the following differences: 
+
+For ```GET```:
+- **Action Name** ```DescribeStream```
+- **Mapping Templates**
+   * **Template Body** 
+      ```json
+      {
+         "StreamName": "$input.params('stream-name')"
+      }
+      ```
+
+For ```POST```:
+- **Action Name** ```CreateStream```
+- **Mapping Templates**
+   * **Template Body** 
+      ```json
+      {
+         "ShardCount": #if(input.path('.ShardCount') == '') 5 #else input.path('.ShardCount') #end, 
+         "StreamName": "$input.params('stream-name')"
+      }
+      ```
+
+For ```DELETE```:
+- **Action Name** ```DeleteStream```
+- **Mapping Templates**
+   * **Template Body** 
+      ```json
+      {
+         "StreamName": "$input.params('stream-name')"
+      }
+      ```
+Under the ```{stream-name}``` resource, we create two child resources ```record``` and ```records```. For both of these we create ```PUT``` a method.
+
+The methods and integration requests are created in the same way as the methods above except for the following differences: 
+
+```PUT``` for ```record```:
+- **Action Name** ```PutRecord```
+- **Mapping Templates**
+   * **Template Body** 
+      ```json
+      {
+         "StreamName": "$input.params('stream-name')",
+         "Data": "$util.base64Encode($input.json('$.Data'))",
+         "PartitionKey": "$input.path('$.PartitionKey')"
+      }
+      ```
+```PUT``` for ```records```:
+- **Action Name** ```PutRecords```
+- **Mapping Templates**
+   * **Template Body** 
+      ```json
+      {
+         "StreamName": "$input.params('stream-name')",
+         "Records": [
+            #foreach(elemininput.path('$.records'))
+               {
+                  "Data": "util.base64Encode(elem.data)",
+                  "PartitionKey": "$elem.partition-key"
+               }#if($foreach.hasNext),#end
+            #end
+         ]
+      }
+      ```
+
+The API should look like this:
+
+![Alt text](images/image-13.png)
+
+Finally, deploy the API so it can be accessed from the web.
+
+
+### Pinterest User Posting Emulator for Streaming
+
+The python program user_posting_emulation_streaming.py in the same way as user_posting_emulation.py, will infinitely read random datasets from the remote database at random intervals and then, using the ```requests``` python library, post them to the new API we built for Kinesis.
+
+It will post data one record at a time to the ```PUT``` method of the resource ```/stream/{stream-name}/record``` for the Kinesis action ```PutRecord```.
+
+The ```GET``` methods for the actions ```ListStreams``` and ```DescribeStreams``` have also been implemented in the program for testing purposes.
+
+To run this program: 
+```bash
+python user_posting_emulation_streaming.py
+```
+Once the data is sent to the API, we can visualize it in Kinesis as shown below:
+![Alt text](images/image-14.png)
+![Alt text](images/image-15.png)
+![Alt text](images/image-16.png)
+
+### Spark Streaming in Databricks
+#### Batch notebooks used in the streaming pipeline
+The same notebook **Get Authentication Keys.py** is used to access the AWS credentials needed for the Kinesis streams.
+
+The cleaning notebooks **Clean Pin Data.py**, **Clean Geo Data.py** and **Clean User Data.py** have also been modified so they can be used by both batch and streaming pipelines. 
+
+Each of these notebooks have had a widget named ```mode``` added with a value defaulted to "Batch". \
+This allows the notebooks to behave in exactly the same way as before, including when being run from the DAG in Airflow. \
+The difference is that these notebooks can be run from another notebook with the parameter for ```mode``` set to "Stream" like so:
+```
+%run "/path_to_notebook/Clean xxx Data" $mode="Stream"
+```
+By doing so, they can perform the same cleaing functions using the streaming dataframes instead of the batch ones.
+
+#### Spark Streaming Notebook
+**Kinesis Streaming.py** executes the following processes:
+- Get the AWS authentication key file using ****Get Authentication Keys.py**
+- Define read_stream function
+- Define write_stream function
+- Read the pin Kinesis stream
+- Clean the pin data using **Clean Pin Data.py**
+- Save pin to a delta table
+- Read the geo Kinesis stream
+- Clean the geo data using **Clean Geo Data.py**
+- Save geo to a delta table
+- Read the user Kinesis stream
+- Clean the user data using **Clean User Data.py**
+- Save user to a delta table
+
+#### Saving the Streamed Data in Delta Tables
+The streamed data can be seen in the Databricks File Store as shown below:
+![Alt text](images/image-17.png)
+![Alt text](images/image-18.png)
+![Alt text](images/image-19.png)
+
+The pipelines are now complete.
 
 ## Usage instructions
 ### Python files
-**user_posting_emulation.py** :  This program will infinitely read random datasets from the remote database at random intervals and then post them to the API Gateway.
+**user_posting_emulation.py** :  This program will infinitely read random datasets from the remote database at random intervals and then post them to the API Gateway for batch data.
 
 To run this program: 
 ```bash
@@ -395,6 +557,27 @@ To run this program:
 ```bash
 python check_user_posting_emulation.py
 ```
+**user_posting_emulation_streaming.py** :  This program will infinitely read random datasets from the remote database at random intervals and then post them to the API Gateway for Kinesis streaming.
+
+To run this program: 
+```bash
+python user_posting_emulation.py
+```
+### Databricks notebooks
+Within the Databricks workspace navigate to the following location:
+```/Repos/rgducke@gmail.com/pinterest-data-pipeline/```
+
+To process the batch pipeline, run the following notebooks in order:
+1. **Access S3 Without Mounting**
+2. **Clean Pin Data**
+3. **Clean Geo Date**
+4. **Clean USer Data**
+
+Alternatively, trigger the DAG ```129a67850695_dag``` in the MWAA Airflow UI.
+
+To process the streaming pipeline, run the following notebook:
+1. **Kinesis Streaming**
+
 ## File structure of the project:
 Local Machine \
 |-- dags/ \
@@ -405,14 +588,16 @@ Local Machine \
 &nbsp;&nbsp;&nbsp;&nbsp;|-- Clean Pin Data.py \
 &nbsp;&nbsp;&nbsp;&nbsp;|-- Clean User Data.py \
 &nbsp;&nbsp;&nbsp;&nbsp;|-- Data Analysis.py \
-&nbsp;&nbsp;&nbsp;&nbsp;|-- Mount S3 Bucket and Create Dataframes.py \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- Get Authentication Keys.py \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- Kinesis Streaming.py \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- Mount S3 Bucket.py \
 &nbsp;&nbsp;&nbsp;&nbsp;|-- Unmount S3 Bucket.py \
 |-- .env.example \
-|-- user_posting_emulation.py \
 |-- check_user_posting_emulation.py \
-|-- kinesis_streaming.py \
 |-- README.md \
-|-- requirements.txt
+|-- requirements.txt \
+|-- user_posting_emulation.py \
+|-- user_posting_emulation_streaming.py \
 
 EC2 Instance
 |-- kafka_2.12-2.8.1/ \
@@ -430,7 +615,7 @@ EC2 Instance
 ## License information:
 MIT License
 
-Copyright (c) 2023 Robert Ducke
+Copyright (c) 2024 Robert Ducke
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -449,6 +634,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
-
-[def]: #Usage-Instructions
