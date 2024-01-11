@@ -262,7 +262,7 @@ Example JSON formats of each dataset are as follows:
 {"ind": 10794, "first_name": "Thomas", "last_name": "Turner", "age": 34, "date_joined": "2016-12-22 00:02:02"}
 ```
 
-The python program user_posting_emulation.py will infinitely read random datasets from the remote database at random intervals and then, using the ```requests``` python library, post them to the API we built earlier.
+The python program **user_posting_emulation.py** will infinitely read random datasets from the remote database at random intervals and then, using the ```requests``` python library, post them to the API we built earlier.
 
 To run this program: 
 ```bash
@@ -270,7 +270,7 @@ python user_posting_emulation.py
 ```
 
 #### Testing whether data is ingested by Kafka
-To test whether the emulation is working, the python program check_user_posting_emulation.py will create Kafka consumers using the API and then consume the messages and output them to the JSON files: 
+To test whether the emulation is working, the python program **check_user_posting_emulation.py** will create Kafka consumers using the API and then consume the messages and output them to the JSON files: 
 - pin_consumer.json
 - geo_consumer.json
 - user_consumer.json
@@ -287,7 +287,7 @@ The emulation can also be tested by running a consumer from the command line lik
 The CLI command must be run on the EC2 instance where Kafka is installed, but the python programs can be run from any python environment anywhere there is an internet connection.
 
 #### Testing Data has been ingested and stored in S3
-To see if the data has gone through the Kafka via MSK and MSK Connect, we can look in the S3 data lake.
+To see if the data has gone through Kafka via MSK and MSK Connect, we can look in the S3 data lake.
 ![Alt text](images/image-4.png)
 ![Alt text](images/image-5.png)
 ![Alt text](images/image-6.png)
@@ -392,8 +392,10 @@ The DAG has been run successfully a few times as shown below: \
 ![Alt text](images/image-8.png)
 
 ## Creating the Streaming Pipeline
+Below are the steps required to create the streaming pipeline.
+
 ### Kinesis Data Streams
-In the AWS Kinesis console three new Data Streams are created as shown: 
+In the AWS Kinesis console three new **Data Streams** are created as shown: 
 ![Alt text](images/image-9.png)
 
 ### API Gateway with Kinesis Integration
@@ -457,7 +459,7 @@ For ```DELETE```:
          "StreamName": "$input.params('stream-name')"
       }
       ```
-Under the ```{stream-name}``` resource, we create two child resources ```record``` and ```records```. For both of these we create ```PUT``` a method.
+Under the ```{stream-name}``` resource, we create two child resources ```record``` and ```records```. For both of these we create a ```PUT``` method.
 
 The methods and integration requests are created in the same way as the methods above except for the following differences: 
 
@@ -490,7 +492,7 @@ The methods and integration requests are created in the same way as the methods 
       }
       ```
 
-The API should look like this:
+The finished API should look like this:
 
 ![Alt text](images/image-13.png)
 
@@ -499,7 +501,7 @@ Finally, deploy the API so it can be accessed from the web.
 
 ### Pinterest User Posting Emulator for Streaming
 
-The python program user_posting_emulation_streaming.py in the same way as user_posting_emulation.py, will infinitely read random datasets from the remote database at random intervals and then, using the ```requests``` python library, post them to the new API we built for Kinesis.
+The python program **user_posting_emulation_streaming.py** in the same way as **user_posting_emulation.py**, will infinitely read random datasets from the remote database at random intervals and then, using the ```requests``` python library, post them to the new API we built for Kinesis.
 
 It will post data one record at a time to the ```PUT``` method of the resource ```/stream/{stream-name}/record``` for the Kinesis action ```PutRecord```.
 
@@ -511,7 +513,9 @@ python user_posting_emulation_streaming.py
 ```
 Once the data is sent to the API, we can visualize it in Kinesis as shown below:
 ![Alt text](images/image-14.png)
+
 ![Alt text](images/image-15.png)
+
 ![Alt text](images/image-16.png)
 
 ### Spark Streaming in Databricks
@@ -531,7 +535,7 @@ Note: The called notebook has to be in the same folder as the calling notebook.
 
 #### Spark Streaming Notebook
 **Kinesis Streaming.py** executes the following processes:
-- Get the AWS authentication key file using ****Get Authentication Keys.py**
+- Get the AWS authentication key file using **Get Authentication Keys.py**
 - Define read_stream function
 - Define write_stream function
 - Read the pin Kinesis stream
@@ -547,7 +551,9 @@ Note: The called notebook has to be in the same folder as the calling notebook.
 #### Saving the Streamed Data in Delta Tables
 The streamed data can be seen in the Databricks File Store as shown below:
 ![Alt text](images/image-17.png)
+
 ![Alt text](images/image-18.png)
+
 ![Alt text](images/image-19.png)
 
 The pipelines are now complete.
@@ -566,11 +572,16 @@ To run this program:
 ```bash
 python check_user_posting_emulation.py
 ```
+The output is saved in the files:
+- geo_consumer.json
+- pin_consumer.json
+- user_consumer.json
+
 **user_posting_emulation_streaming.py** :  This program will infinitely read random datasets from the remote database at random intervals and then post them to the API Gateway for Kinesis streaming.
 
 To run this program: 
 ```bash
-python user_posting_emulation.py
+python user_posting_emulation_streaming.py
 ```
 ### Databricks notebooks
 Within the Databricks workspace navigate to the following location:
