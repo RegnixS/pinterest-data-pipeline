@@ -306,13 +306,15 @@ Now that the access keys are available from within the Databricks file store, we
 
 In some notebooks, resultant dataframes have been copied to Global Temporary Views to make them available to other notebooks. In these cases, "129a67850695" has been added to the name so other developers will not overwrite them by using similar names.
 
-**Get Authentication Keys.py** accesses the authentication keys file in the Databricks file store and loads the keys to a dataframe. \
+**AWS Access Utils.py** accesses the authentication keys file in the Databricks file store and loads the keys to a dataframe. \
+This notebook also defines the functions to access AWS S3 data or AWS Kinesis streams. \
+The function definitions do not manipulate data, so they are very fast to process. Therefore it does matter if they are run in notebooks that don't need them.
+
 Note: This notebook has to be in the same folder as the calling notebook.
 
 **Mount S3 Bucket.py** performs the following tasks:
-- Runs the **Get Authentication Keys.py** notebook inline to access the keys using: ```%run "./Get Authentication Keys"```
+- Runs the **AWS Access Utils.py** notebook inline to access the keys using: ```%run "./AWS Access Utils.py"```
 - Mount the S3 bucket using the bucket URI and keys.
-- Defines the read_from_S3 function 
 - Read the pin data from: ```/mnt/<bucket_name>/topics/129a67850695.pin/partition=0/```
 - Read the geo data from: ```/mnt/<bucket_name>/topics/129a67850695.geo/partition=0/```
 - Read the user data from: ```/mnt/<bucket_name>/topics/129a67850695.user/partition=0/```
@@ -324,9 +326,7 @@ Note: This notebook has to be in the same folder as the calling notebook.
 While working on the project I discovered that Databricks no longer recommends mounting external data sources to the Databricks filesystem, so I made a new notebook. [See link.](https://docs.databricks.com/en/connect/storage/amazon-s3.html#deprecated-patterns-for-storing-and-accessing-data-from-databricks)
 
 **Access S3 Without Mounting.py** performs the following tasks similar to the previous notebook, but reads directly from the S3 bucket using the access keys and S3 URI without needing a mount:
-- Runs the **Get Authentication Keys.py** notebook inline to access the keys using: ```%run "./Get Authentication Keys"```
-- Defines the bucket name
-- Defines the read_from_S3 function
+- Runs the **AWS Access Utils.py** notebook inline to access the keys using: ```%run "./AWS Access Utils.py"```
 - Read the pin data from: ```s3n://<bucket_name/topics/129a67850695.pin/partition=0/``` 
 - Read the geo data from: ```s3n//<bucket_name>/topics/129a67850695.geo/partition=0/```
 - Read the user data from: ```s3n//<bucket_name>/topics/129a67850695.user/partition=0/```
@@ -520,7 +520,7 @@ Once the data is sent to the API, we can visualize it in Kinesis as shown below:
 
 ### Spark Streaming in Databricks
 #### Batch notebooks used in the streaming pipeline
-The same notebook **Get Authentication Keys.py** is used to access the AWS credentials needed for the Kinesis streams.
+The same notebook **AWS Access Utils.py** is used to access the AWS credentials needed for the Kinesis streams.
 
 The cleaning notebooks **Clean Pin Data.py**, **Clean Geo Data.py** and **Clean User Data.py** have also been modified so they can be used by both batch and streaming pipelines. 
 
@@ -535,9 +535,7 @@ Note: The called notebook has to be in the same folder as the calling notebook.
 
 #### Spark Streaming Notebook
 **Kinesis Streaming.py** executes the following processes:
-- Get the AWS authentication key file using **Get Authentication Keys.py**
-- Define read_stream function
-- Define write_stream function
+- Get the AWS authentication key file using **AWS Access Utils.py**
 - Read the pin Kinesis stream
 - Clean the pin data using **Clean Pin Data.py**
 - Save pin to a delta table
@@ -607,11 +605,11 @@ Local Machine \
 &nbsp;&nbsp;&nbsp;&nbsp;|-- 129a67850695_dag.py \
 |-- databricks_notebooks/ \
 &nbsp;&nbsp;&nbsp;&nbsp;|-- Access S3 Without Mounting.py \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- AWS Access Utils.py \
 &nbsp;&nbsp;&nbsp;&nbsp;|-- Clean Geo Data.py \
 &nbsp;&nbsp;&nbsp;&nbsp;|-- Clean Pin Data.py \
 &nbsp;&nbsp;&nbsp;&nbsp;|-- Clean User Data.py \
 &nbsp;&nbsp;&nbsp;&nbsp;|-- Data Analysis.py \
-&nbsp;&nbsp;&nbsp;&nbsp;|-- Get Authentication Keys.py \
 &nbsp;&nbsp;&nbsp;&nbsp;|-- Kinesis Streaming.py \
 &nbsp;&nbsp;&nbsp;&nbsp;|-- Mount S3 Bucket.py \
 &nbsp;&nbsp;&nbsp;&nbsp;|-- Unmount S3 Bucket.py \
