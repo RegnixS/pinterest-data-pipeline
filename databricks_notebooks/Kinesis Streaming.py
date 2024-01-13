@@ -2,17 +2,15 @@
 # MAGIC %md
 # MAGIC #Kinesis Streaming
 # MAGIC 1. Get the AWS authentication key file
-# MAGIC 2. Define read_stream function
-# MAGIC 3. Define write_stream function
-# MAGIC 4. Read the pin Kinesis stream
-# MAGIC 5. Clean the pin data
-# MAGIC 6. Save pin to a delta table
-# MAGIC 7. Read the geo Kinesis stream
-# MAGIC 8. Clean the geo data
-# MAGIC 9. Save geo to a delta table
-# MAGIC 10. Read the user Kinesis stream
-# MAGIC 11. Clean the user data
-# MAGIC 12. Save user to a delta table
+# MAGIC 2. Read the pin Kinesis stream
+# MAGIC 3. Clean the pin data
+# MAGIC 4. Save pin to a delta table
+# MAGIC 5. Read the geo Kinesis stream
+# MAGIC 6. Clean the geo data
+# MAGIC 7. Save geo to a delta table
+# MAGIC 8. Read the user Kinesis stream
+# MAGIC 9. Clean the user data
+# MAGIC 10. Save user to a delta table
 
 # COMMAND ----------
 
@@ -21,65 +19,7 @@
 
 # COMMAND ----------
 
-# MAGIC %run "./Get Authentication Keys"
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ##Define read_stream function
-
-# COMMAND ----------
-
-def read_stream(stream_name, schema):
-    '''
-    This function reads data from a Kinesis stream, extracts the columns from the "data" column and returns a datframe with the schema provided.
-
-    Args:
-        stream_name (string) : The name of the stream to read from.
-        schema (string) : A string containing the schema of the output dataframe.
-
-    Returns:
-        pyspark.sql.DataFrame : A DataFrame with the provided schema.
-    '''
-    from pyspark.sql.functions import col, from_json
-    
-    # Read in the Kinesis stream to a dataframe
-    df_kinesis = spark.readStream \
-        .format('kinesis') \
-        .option('streamName', stream_name) \
-        .option('initialPosition','earliest') \
-        .option('region','us-east-1') \
-        .option('awsAccessKey', ACCESS_KEY) \
-        .option('awsSecretKey', SECRET_KEY) \
-        .load()
-
-    # Create a new dataframe containing the columns exploded from the "data" column
-    df_out = df_kinesis.select(from_json(col("data").cast("string"), schema).alias("data")) \
-        .select("data.*")
-    
-    return df_out
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ##Define write_stream function
-
-# COMMAND ----------
-
-def write_stream(table_name, df_in):
-    '''
-    This function writes data from a kinesis stream to a delta table.
-
-    Args:
-        table_name (string) : The name of the delta table to write to.
-        df_in (pyspark.sql.DataFrame) : The dataframe to be written to the table.
-    '''
-    # Write the cleaned dataframe to a Delta Table 
-    df_in.writeStream \
-        .format("delta") \
-        .outputMode("append") \
-        .option("checkpointLocation", f"/tmp/kinesis/{table_name}_checkpoints/") \
-        .table(table_name)
+# MAGIC %run "./AWS Access Utils"
 
 # COMMAND ----------
 

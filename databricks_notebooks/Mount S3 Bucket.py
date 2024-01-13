@@ -3,9 +3,8 @@
 # MAGIC #Mount the S3 Bucket containing data from Kafka
 # MAGIC 1. Get the AWS authentication key file 
 # MAGIC 2. Mount the S3 bucket
-# MAGIC 3. Define read_from_S3 function
-# MAGIC 4. Create 3 dataframes from the 3 locations in the mounted bucket
-# MAGIC 5. Copy Dataframes to Global Temporary Views
+# MAGIC 3. Create 3 dataframes from the 3 locations in the mounted bucket
+# MAGIC 4. Copy Dataframes to Global Temporary Views
 # MAGIC
 
 # COMMAND ----------
@@ -15,7 +14,7 @@
 
 # COMMAND ----------
 
-# MAGIC %run "./Get Authentication Keys"
+# MAGIC %run "./AWS Access Utils"
 
 # COMMAND ----------
 
@@ -24,8 +23,6 @@
 
 # COMMAND ----------
 
-# AWS S3 bucket name
-AWS_S3_BUCKET = "user-129a67850695-bucket"
 # Mount name for the bucket
 MOUNT_NAME = "/mnt/user-129a67850695-bucket"
 # Source url
@@ -44,33 +41,6 @@ display(dbutils.fs.ls("/mnt/user-129a67850695-bucket/"))
 
 # We need to turn off delta format check before trying to read the json files because of a change to Databricks configuration
 spark.conf.set("spark.databricks.delta.formatCheck.enabled", False)
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ##Define read_from_S3 function
-
-# COMMAND ----------
-
-def read_from_S3(file_location):
-    '''
-    This function reads json data from an S3 bucket and returns a dataframe.
-
-    Args:
-        file_location (string) : The mounted DBFS file location mapped to where the json data is held in the bucket.
-
-    Returns:
-        pyspark.sql.DataFrame : A DataFrame of the data.
-    '''
-    file_type = "json"
-    # Ask Spark to infer the schema
-    infer_schema = "true"
-    # Read in JSONs from mounted S3 bucket
-    df_out = spark.read.format(file_type) \
-        .option("inferSchema", infer_schema) \
-        .load(file_location)
-
-    return df_out
 
 # COMMAND ----------
 

@@ -3,10 +3,8 @@
 # MAGIC #Access the S3 Bucket containing data from Kafka
 # MAGIC Because accessing S3 Buckets using Databricks filesystem mounts has been deprecated, this notebook implements the same functionality without creating a mount point. [See link.](https://docs.databricks.com/en/connect/storage/amazon-s3.html#deprecated-patterns-for-storing-and-accessing-data-from-databricks) 
 # MAGIC 1. Get the AWS authentication key file
-# MAGIC 2. Define Bucket Name
-# MAGIC 3. Define read_from_S3 function
-# MAGIC 4. Create 3 dataframes from the 3 locations in the bucket
-# MAGIC 5. Copy Dataframes to Global Temporary Views
+# MAGIC 2. Create 3 dataframes from the 3 locations in the bucket
+# MAGIC 3. Copy Dataframes to Global Temporary Views
 
 # COMMAND ----------
 
@@ -15,44 +13,7 @@
 
 # COMMAND ----------
 
-# MAGIC %run "./Get Authentication Keys"
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ##Define Bucket Name
-
-# COMMAND ----------
-
-# AWS S3 bucket name
-AWS_S3_BUCKET = "user-129a67850695-bucket"
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ##Define read_from_S3 function
-
-# COMMAND ----------
-
-def read_from_S3(file_location):
-    '''
-    This function reads json data from an S3 bucket and returns a dataframe.
-
-    Args:
-        file_location (string) : The S3N file location where the json data is held in the bucket.
-
-    Returns:
-        pyspark.sql.DataFrame : A DataFrame of the data.
-    '''
-    file_type = "json"
-    # Ask Spark to infer the schema
-    infer_schema = "true"
-    # Read in JSONs from mounted S3 bucket
-    df_out = spark.read.format(file_type) \
-        .option("inferSchema", infer_schema) \
-        .load(file_location)
-
-    return df_out
+# MAGIC %run "./AWS Access Utils"
 
 # COMMAND ----------
 
