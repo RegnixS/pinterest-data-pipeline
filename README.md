@@ -507,6 +507,8 @@ It will post data one record at a time to the ```PUT``` method of the resource `
 
 The ```GET``` methods for the actions ```ListStreams``` and ```DescribeStreams``` have also been implemented in the program for testing purposes.
 
+I extended the mapping template in the API integration for Kinesis for ```ListStreams``` to include the input parameters ```ExclusiveStartStreamName``` and ```Limit``` so we can start the list of streams at and only show the three streams that we created (beginning with 129a67850695).
+
 To run this program: 
 ```bash
 python user_posting_emulation_streaming.py
