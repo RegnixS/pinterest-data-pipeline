@@ -308,7 +308,7 @@ In some notebooks, resultant dataframes have been copied to Global Temporary Vie
 
 **AWS Access Utils.py** accesses the authentication keys file in the Databricks file store and loads the keys to a dataframe. \
 This notebook also defines the functions to access AWS S3 data or AWS Kinesis streams. \
-The function definitions do not manipulate data, so they are very fast to process. Therefore it does matter if they are run in notebooks that don't need them.
+The function definitions do not manipulate data, so the code runs very quickly. Therefore it doesn't matter if they are run in notebooks that don't need them.
 
 Note: This notebook has to be in the same folder as the calling notebook.
 
