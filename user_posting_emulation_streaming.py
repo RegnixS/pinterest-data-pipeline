@@ -32,10 +32,10 @@ class AWSDBConnector:
         """
             Initializes DatabaseConnector.
         """
-        self.HOST = "pinterestdbreadonly.cq2e8zno855e.eu-west-1.rds.amazonaws.com"
-        self.DATABASE = 'pinterest_data'
-        self.PORT = 3306
-        self.USER = 'project_user'
+        self.HOST = os.getenv('MYSQL_HOST')
+        self.DATABASE = os.getenv('MYSQL_DATABASE')
+        self.PORT = os.getenv('MYSQL_PORT')
+        self.USER = os.getenv('MYSQL_USER')
         self.PASSWORD = os.getenv('MYSQL_PASSWORD')
         
     def create_db_connector(self):
@@ -58,7 +58,6 @@ def run_infinite_post_data_loop():
     """
     x = 0
     while True:
-    #while x < 1:
         sleep(random.randrange(0, 2))
         random_row = random.randint(0, 11000)
         engine = new_connector.create_db_connector()
@@ -66,37 +65,47 @@ def run_infinite_post_data_loop():
 
         with engine.connect() as connection:
 
-            pin_string = sqlalchemy.text(f"SELECT * FROM pinterest_data LIMIT {random_row}, 1")
-            pin_selected_row = connection.execute(pin_string)
-            
-            for row in pin_selected_row:
-                pin_result = dict(row._mapping)
+            pin_result = get_data_from_rds(connection, "pinterest_data", random_row)
 
-            geo_string = sqlalchemy.text(f"SELECT * FROM geolocation_data LIMIT {random_row}, 1")
-            geo_selected_row = connection.execute(geo_string)
-            
-            for row in geo_selected_row:
-                geo_result = dict(row._mapping)
+            geo_result = get_data_from_rds(connection, "geolocation_data", random_row)
+        
+            user_result = get_data_from_rds(connection, "user_data", random_row)
 
-            user_string = sqlalchemy.text(f"SELECT * FROM user_data LIMIT {random_row}, 1")
-            user_selected_row = connection.execute(user_string)
-            
-            for row in user_selected_row:
-                user_result = dict(row._mapping)
+        # Convert the datetime.datetime objects to make them serializable
+        geo_result["timestamp"] = geo_result["timestamp"].strftime('%Y-%m-%d %H:%M:%S')
+        user_result["date_joined"] = user_result["date_joined"].strftime('%Y-%m-%d %H:%M:%S')
+        
+        post_data_to_stream(pin_result, "pin")
+        post_data_to_stream(geo_result, "geo")
+        post_data_to_stream(user_result, "user")
 
-            # Convert the datetime.datetime objects to make them serializable
-            geo_result["timestamp"] = geo_result["timestamp"].strftime('%Y-%m-%d %H:%M:%S')
-            user_result["date_joined"] = user_result["date_joined"].strftime('%Y-%m-%d %H:%M:%S')
-            
-            print(pin_result)
-            post_data_to_API(pin_result, "pin")
-            print(geo_result)
-            post_data_to_API(geo_result, "geo")
-            print(user_result)
-            post_data_to_API(user_result, "user")
+def get_data_from_rds(connection, table_name, random_row):
+    """
+    Retrieves a record from the MYSQL database. 
+    
+    Args:
+        Connection : The connection to the MYSQL database.
+        String : The name of the table to be read.
+        Integer : The randomw row number.  
+    
+        String : The name of the table to be read.
+        Integer : The randomw row number.  
+    
+    Returns:
+        Dictionary : Contains the data to be sent to the API.
+    """
+    select_string = sqlalchemy.text(f"SELECT * FROM {table_name} LIMIT {random_row}, 1")
+    selected_row = connection.execute(select_string)
+    
+    for row in selected_row:
+        mapped_result = dict(row._mapping)
+    
+    print(mapped_result)
+
+    return mapped_result
 
 
-def post_data_to_API(dict_result, stream_suffix):
+def post_data_to_stream(dict_result, stream_suffix):
     """
     Takes a dictionary of data and posts it to the API Gateway. 
             
@@ -160,9 +169,12 @@ if __name__ == "__main__":
     """
     Continuously run the emulation by downloading data from RDS and posting to the API.
     """
-
     get_streams(stream_name="streaming-129a67850695", limit=3)
-    #describe_streams("streaming-129a67850695-pin")
+
+    describe_streams("streaming-129a67850695-pin")
+    describe_streams("streaming-129a67850695-geo")
+    describe_streams("streaming-129a67850695-user")
+
     run_infinite_post_data_loop()
     print('Working')
 

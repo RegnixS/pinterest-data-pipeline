@@ -287,10 +287,9 @@ The emulation can also be tested by running a consumer from the command line lik
 The CLI command must be run on the EC2 instance where Kafka is installed, but the python programs can be run from any python environment anywhere there is an internet connection.
 
 #### Testing Data has been ingested and stored in S3
-To see if the data has gone through Kafka via MSK and MSK Connect, we can look in the S3 data lake.
+To see if the data has gone through Kafka via MSK and MSK Connect, we can look in the S3 data lake. \
+E.g: 
 ![Alt text](images/image-4.png)
-![Alt text](images/image-5.png)
-![Alt text](images/image-6.png)
 
 ### Databricks and Spark
 #### Accessing the S3 bucket from Databricks
@@ -304,29 +303,31 @@ Drop the key CSV file in the space and click **Create Table with UI**.
 
 Now that the access keys are available from within the Databricks file store, we can use them in our notebooks.
 
+Notebooks are created in Databricks as .py files, but they have been converted to .ipynb files for readabilty outside of Databricks.
+
 In some notebooks, resultant dataframes have been copied to Global Temporary Views to make them available to other notebooks. In these cases, "129a67850695" has been added to the name so other developers will not overwrite them by using similar names.
 
-**AWS Access Utils.py** accesses the authentication keys file in the Databricks file store and loads the keys to a dataframe. \
+**AWS Access Utils.ipynb** accesses the authentication keys file in the Databricks file store and loads the keys to a dataframe. \
 This notebook also defines the functions to access AWS S3 data or AWS Kinesis streams. \
 The function definitions do not manipulate data, so the code runs very quickly. Therefore it doesn't matter if they are run in notebooks that don't need them.
 
 Note: This notebook has to be in the same folder as the calling notebook.
 
-**Mount S3 Bucket.py** performs the following tasks:
-- Runs the **AWS Access Utils.py** notebook inline to access the keys using: ```%run "./AWS Access Utils.py"```
+**Mount S3 Bucket.ipynb** performs the following tasks:
+- Runs the **AWS Access Utils.ipynb** notebook inline to access the keys using: ```%run "./AWS Access Utils"```
 - Mount the S3 bucket using the bucket URI and keys.
 - Read the pin data from: ```/mnt/<bucket_name>/topics/129a67850695.pin/partition=0/```
 - Read the geo data from: ```/mnt/<bucket_name>/topics/129a67850695.geo/partition=0/```
 - Read the user data from: ```/mnt/<bucket_name>/topics/129a67850695.user/partition=0/```
 - Copy the dataframes to Global Temporary Views.
 
-**Unmount S3 Bucket.py** will unmount the bucket after we are done with it. This would normally be after all the processing has been done using the data in the bucket.
+**Unmount S3 Bucket.ipynb** will unmount the bucket after we are done with it. This would normally be after all the processing has been done using the data in the bucket.
 
 #### Access S3 Buckets Without Mounting
 While working on the project I discovered that Databricks no longer recommends mounting external data sources to the Databricks filesystem, so I made a new notebook. [See link.](https://docs.databricks.com/en/connect/storage/amazon-s3.html#deprecated-patterns-for-storing-and-accessing-data-from-databricks)
 
-**Access S3 Without Mounting.py** performs the following tasks similar to the previous notebook, but reads directly from the S3 bucket using the access keys and S3 URI without needing a mount:
-- Runs the **AWS Access Utils.py** notebook inline to access the keys using: ```%run "./AWS Access Utils.py"```
+**Access S3 Without Mounting.ipynb** performs the following tasks similar to the previous notebook, but reads directly from the S3 bucket using the access keys and S3 URI without needing a mount:
+- Runs the **AWS Access Utils.ipynb** notebook inline to access the keys using: ```%run "./AWS Access Utils"```
 - Read the pin data from: ```s3n://<bucket_name/topics/129a67850695.pin/partition=0/``` 
 - Read the geo data from: ```s3n//<bucket_name>/topics/129a67850695.geo/partition=0/```
 - Read the user data from: ```s3n//<bucket_name>/topics/129a67850695.user/partition=0/```
@@ -335,7 +336,7 @@ While working on the project I discovered that Databricks no longer recommends m
 #### Cleaning and Transforming the Data
 The cleaning of the incoming data is done in three separate notebooks. One for Pin data, one for Geo (location) data and one for user data.
 
-**Clean Pin Data.py** performs the following transformations:
+**Clean Pin Data.ipynb** performs the following transformations:
 - Drop duplicates
 - Replace entries with no relevant data in each column with Nulls
 - Perform the necessary transformations on the follower_count to ensure every entry is a number and the data type of this column is integer
@@ -343,14 +344,14 @@ The cleaning of the incoming data is done in three separate notebooks. One for P
 - Rename the index column to ind
 - Reorder the dataframe
 
-**Clean Geo Data.py** performs the following transformations:
+**Clean Geo Data.ipynb** performs the following transformations:
 - Drop duplicates
 - Create new coordinates column based on latitiude and longtitude
 - Drop latitude and longtitude
 - Convert timestamp to timestamp data type
 - Reorder the dataframe
 
-**Clean User Data.py** performs the following transformations:
+**Clean User Data.ipynb** performs the following transformations:
 - Drop duplicates
 - Combine first and last names
 - Drop first_name and last_name
@@ -358,7 +359,7 @@ The cleaning of the incoming data is done in three separate notebooks. One for P
 - Reorder the dataframe
 
 #### Data Analysis Using Spark
-In the notebook **Data Analysis.py**, Spark was used to analyse the cleaned and transformed data in order to help inform business users of some examples of potentially valuable metrics that can be derived from such data.
+In the notebook **Data Analysis.ipynb**, Spark was used to analyse the cleaned and transformed data in order to help inform business users of some examples of potentially valuable metrics that can be derived from such data.
 
 The following queries were made using pySpark functions:
 - Most popular category in each country
@@ -382,7 +383,10 @@ Normally to configure MWAA to work with Databricks, we would need to do the foll
 For this project, this has already been done so we need only create the DAG (Directed Acyclic Graph) to orchestrate the Databricks workflow and upload it to the DAGs folder in the S3 bucket.
 
 The DAG **129a67850695_dag.py** is in this repository in the folder **dags**.
-It will run the notebook: **Access S3 Without Mounting.py**, then the cleaning notebooks: **Clean Pin Data.py**, **Clean Geo Data.py**, and **Clean User Data.py**. After all these are finished, it will run notebook: **Data Analysis.py**. 
+It will run the notebook: **Access S3 Without Mounting**, then the cleaning notebooks: **Clean Pin Data**, **Clean Geo Data**, and **Clean User Data**. After all these are finished, it will run notebook: **Data Analysis**. \
+The full Databricks pathnames have to be defined in each case
+```/Repos/rgducke@gmail.com/pinterest-data-pipeline/databricks_notebooks/<notebook_name>``` 
+
 The DAG is set to run daily, but can be run on demand.
 
 The dependency graph is below: \
@@ -516,15 +520,11 @@ python user_posting_emulation_streaming.py
 Once the data is sent to the API, we can visualize it in Kinesis as shown below:
 ![Alt text](images/image-14.png)
 
-![Alt text](images/image-15.png)
-
-![Alt text](images/image-16.png)
-
 ### Spark Streaming in Databricks
 #### Batch notebooks used in the streaming pipeline
-The same notebook **AWS Access Utils.py** is used to access the AWS credentials needed for the Kinesis streams.
+The same notebook **AWS Access Utils.ipynb** is used to access the AWS credentials needed for the Kinesis streams.
 
-The cleaning notebooks **Clean Pin Data.py**, **Clean Geo Data.py** and **Clean User Data.py** have also been modified so they can be used by both batch and streaming pipelines. 
+The cleaning notebooks **Clean Pin Data.ipynb**, **Clean Geo Data.ipynb** and **Clean User Data.ipynb** have also been modified so they can be used by both batch and streaming pipelines. 
 
 Each of these notebooks have had a widget named ```mode``` added with a value defaulted to "Batch". \
 This allows the notebooks to behave in exactly the same way as before, including when being run from the DAG in Airflow. \
@@ -536,25 +536,21 @@ By doing so, they can perform the same cleaning functions using the streaming da
 Note: The called notebook has to be in the same folder as the calling notebook.
 
 #### Spark Streaming Notebook
-**Kinesis Streaming.py** executes the following processes:
-- Get the AWS authentication key file using **AWS Access Utils.py**
+**Kinesis Streaming.ipynb** executes the following processes:
+- Get the AWS authentication key file using **AWS Access Utils.ipynb**
 - Read the pin Kinesis stream
-- Clean the pin data using **Clean Pin Data.py**
+- Clean the pin data using **Clean Pin Data.ipynb**
 - Save pin to a delta table
 - Read the geo Kinesis stream
-- Clean the geo data using **Clean Geo Data.py**
+- Clean the geo data using **Clean Geo Data.ipynb**
 - Save geo to a delta table
 - Read the user Kinesis stream
-- Clean the user data using **Clean User Data.py**
+- Clean the user data using **Clean User Data.ipynb**
 - Save user to a delta table
 
 #### Saving the Streamed Data in Delta Tables
 The streamed data can be seen in the Databricks File Store as shown below:
 ![Alt text](images/image-17.png)
-
-![Alt text](images/image-18.png)
-
-![Alt text](images/image-19.png)
 
 The pipelines are now complete.
 
@@ -606,15 +602,15 @@ Local Machine \
 |-- dags/ \
 &nbsp;&nbsp;&nbsp;&nbsp;|-- 129a67850695_dag.py \
 |-- databricks_notebooks/ \
-&nbsp;&nbsp;&nbsp;&nbsp;|-- Access S3 Without Mounting.py \
-&nbsp;&nbsp;&nbsp;&nbsp;|-- AWS Access Utils.py \
-&nbsp;&nbsp;&nbsp;&nbsp;|-- Clean Geo Data.py \
-&nbsp;&nbsp;&nbsp;&nbsp;|-- Clean Pin Data.py \
-&nbsp;&nbsp;&nbsp;&nbsp;|-- Clean User Data.py \
-&nbsp;&nbsp;&nbsp;&nbsp;|-- Data Analysis.py \
-&nbsp;&nbsp;&nbsp;&nbsp;|-- Kinesis Streaming.py \
-&nbsp;&nbsp;&nbsp;&nbsp;|-- Mount S3 Bucket.py \
-&nbsp;&nbsp;&nbsp;&nbsp;|-- Unmount S3 Bucket.py \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- Access S3 Without Mounting.ipynb \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- AWS Access Utils.ipynb \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- Clean Geo Data.ipynb \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- Clean Pin Data.ipynb \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- Clean User Data.ipynb \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- Data Analysis.ipynb \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- Kinesis Streaming.ipynb \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- Mount S3 Bucket.ipynb \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- Unmount S3 Bucket.ipynb \
 |-- .env.example \
 |-- check_user_posting_emulation.py \
 |-- README.md \
