@@ -1,4 +1,6 @@
 *.pem
 .env
-*.json
+pin_consumer.json
+geo_consumer.json
+user_consumer.json
 
