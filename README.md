@@ -336,8 +336,9 @@ While working on the project I discovered that Databricks no longer recommends m
 #### Cleaning and Transforming the Data
 The cleaning of the incoming data is done in three separate notebooks. One for Pin data, one for Geo (location) data and one for user data.
 
-**Initialize Cleaning Notebooks** 
-This notebook sets up the widget for batch or streaming mode and drops duplicates. \
+**Cleaning Utils** 
+This notebook defines a function to set up the widget for batch or streaming mode and drops duplicates. \
+It also has a function to save a cleaned dataframe to a global temporary view. \
 It is called from all the cleaning notebooks and must be in the same folder.
 
 **Clean Pin Data.ipynb** performs the following transformations:
@@ -611,8 +612,8 @@ Local Machine \
 &nbsp;&nbsp;&nbsp;&nbsp;|-- Clean Geo Data.ipynb \
 &nbsp;&nbsp;&nbsp;&nbsp;|-- Clean Pin Data.ipynb \
 &nbsp;&nbsp;&nbsp;&nbsp;|-- Clean User Data.ipynb \
+&nbsp;&nbsp;&nbsp;&nbsp;|-- Cleaning Utils \
 &nbsp;&nbsp;&nbsp;&nbsp;|-- Data Analysis.ipynb \
-&nbsp;&nbsp;&nbsp;&nbsp;|-- Initialize Cleaning Notebooks \
 &nbsp;&nbsp;&nbsp;&nbsp;|-- Kinesis Streaming.ipynb \
 &nbsp;&nbsp;&nbsp;&nbsp;|-- Mount S3 Bucket.ipynb \
 &nbsp;&nbsp;&nbsp;&nbsp;|-- Unmount S3 Bucket.ipynb \
